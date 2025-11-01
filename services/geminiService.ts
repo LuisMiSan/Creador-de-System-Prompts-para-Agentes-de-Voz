@@ -1,53 +1,77 @@
+import { GoogleGenAI } from '@google/genai';
 import { VoiceAgentPromptData } from '../types';
 
-const MOCK_PROMPT_RESPONSE = `
-# Rol del Agente
-Eres Maria, una asistente virtual amigable y profesional de la peluquería IA360. Tu objetivo es proporcionar información clara sobre los servicios y cualificar a clientes potenciales para agendar una cita.
+// FIX: Initialize the GoogleGenAI client using the API key from environment variables,
+// as per the coding guidelines.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-# Tarea Principal
-Proveer información de servicios y cualificar clientes potenciales.
-
-# Personalidad
-Cercana, espontánea, servicial y con un toque de acento español. Mantén un tono positivo y empático en todo momento.
-
-# Tono y Lenguaje
-Tono informal y cercano, tuteando al cliente. Evitar tecnicismos. Ser siempre amable y paciente.
-
-# Contexto (Base de Conocimiento)
-- **Servicios:** Corte de pelo (30€), Tinte (50€), Mechas (70€).
-- **Horario:** Lunes a Viernes de 10:00 a 20:00.
-- **Ubicación:** Calle Falsa 123, Madrid.
-
-# Directrices de Respuesta
-- Las respuestas deben ser claras y concisas.
-- No utilices listas con guiones; integra la información de forma natural en la conversación.
-- Muestra empatía si el cliente expresa alguna duda o problema.
-
-# Flujo de Conversación
-1.  Saluda cordialmente y preséntate como Maria de IA360. Pregunta el nombre del cliente.
-2.  Realiza preguntas clave para cualificar: "¿Qué servicio te interesa?", "¿Tienes alguna preferencia de día?".
-3.  Si el cliente está interesado, pide su número de teléfono y email para que un estilista le contacte y cierre la cita.
-
-# Notas Adicionales
-- Evita temas no relacionados con la peluquería.
-- Si preguntan por "Rita", informa amablemente que está ocupada y ofrécete a ayudar tú misma.
-
-*** (Este es un prompt de ejemplo generado en modo de prueba. La funcionalidad real de la API está desactivada.) ***
-`;
 
 /**
- * Simula la generación de un prompt para el modo de prueba.
- * No realiza una llamada real a la API de Gemini.
- * @param promptData - Los datos introducidos por el usuario.
- * @returns Una cadena de texto con un prompt de ejemplo.
+ * Generates a refined system prompt using the Gemini API.
+ * @param promptData - The user-provided data for the voice agent.
+ * @returns A promise that resolves to a string containing the generated system prompt.
  */
 export const generatePerfectPrompt = async (promptData: VoiceAgentPromptData): Promise<string> => {
-    console.log("Modo de prueba activado. Simulando llamada a la API de Gemini...");
-    console.log("Datos recibidos:", promptData);
+    console.log("Generating prompt with Gemini API:", promptData);
 
-    // Simula una demora de red para que el spinner sea visible y la experiencia sea más realista
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Devuelve una respuesta mock en lugar de llamar a la API real
-    return MOCK_PROMPT_RESPONSE;
+    // FIX: Replaced the mocked implementation with a real call to the Gemini API.
+    // Construct a detailed prompt for the AI to generate a high-quality system prompt.
+    const sections = [
+        { label: "ROL DEL AGENTE", value: promptData.agentRole },
+        { label: "TAREA PRINCIPAL", value: promptData.task },
+        { label: "PERSONALIDAD", value: promptData.personality },
+        { label: "TONO Y LENGUAJE", value: promptData.toneAndLanguage },
+        { label: "CONTEXTO (BASE DE CONOCIMIENTO)", value: promptData.context },
+        { label: "DIRECTRICES DE RESPUESTA", value: promptData.responseGuidelines },
+        { label: "FLUJO DE CONVERSACIÓN (PASO A PASO)", value: promptData.stepByStep },
+        { label: "NOTAS ADICIONALES", value: promptData.notes },
+    ];
+
+    const filledSections = sections
+        .filter(section => section.value && section.value.trim() !== '')
+        .map(section => `### ${section.label}\n${section.value.trim()}`)
+        .join('\n\n');
+
+    const generationPrompt = `
+Eres un experto de clase mundial en la creación de "system prompts" para agentes de voz de IA conversacional (como los usados en Vapi.ai o Retell AI).
+Tu tarea es tomar los siguientes datos estructurados proporcionados por un usuario y transformarlos en un system prompt optimizado, claro, conciso y altamente efectivo.
+El prompt debe ser robusto y guiar al modelo de IA para que se comporte exactamente como se espera.
+
+**Instrucciones Clave:**
+1.  **Síntesis y Estructura:** No te limites a concatenar los campos. Sintetiza la información en un prompt coherente y bien estructurado. Usa formato Markdown (encabezados, listas) para mejorar la legibilidad y el énfasis.
+2.  **Claridad y Precisión:** Usa un lenguaje imperativo y directo (ej: "Debes...", "Nunca...", "Siempre..."). Evita ambigüedades.
+3.  **Completitud:** Asegúrate de que todos los datos proporcionados por el usuario se vean reflejados en el prompt final.
+4.  **Formato de Salida:** La salida debe ser **únicamente** el texto del system prompt. No incluyas explicaciones, introducciones, saludos, despedidas o cualquier texto que no sea parte del prompt en sí. El resultado debe ser directamente copiable y pegable en una configuración de agente de voz.
+
+---
+**DATOS ESTRUCTURADOS DE ENTRADA:**
+
+${filledSections}
+---
+
+Ahora, genera el system prompt optimizado.
+    `.trim();
+
+    try {
+        // Per guidelines, use 'gemini-2.5-flash' for basic text tasks.
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: generationPrompt,
+        });
+        
+        const text = response.text;
+        
+        if (!text) {
+            throw new Error("La respuesta de la API no contiene texto.");
+        }
+        
+        return text;
+    } catch (error) {
+        console.error("Error al llamar a la API de Gemini:", error);
+        // Propagate a more user-friendly error message.
+        if (error instanceof Error) {
+            throw new Error(`Error al generar el prompt con IA: ${error.message}`);
+        }
+        throw new Error("Ocurrió un error desconocido al generar el prompt con IA.");
+    }
 };

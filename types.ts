@@ -14,8 +14,10 @@ export interface PromptHistoryItem {
     promptData: VoiceAgentPromptData;
     generatedPrompt: string;
     timestamp: number;
+    niche: string;
 }
 
+// FIX: Added the missing ApiKey interface to resolve the import error.
 export interface ApiKey {
     name: string;
     key: string;

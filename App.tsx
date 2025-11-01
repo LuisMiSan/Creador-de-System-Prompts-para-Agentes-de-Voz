@@ -4,7 +4,8 @@ import { generatePerfectPrompt } from './services/geminiService';
 import InputField from './components/InputField';
 import Spinner from './components/Spinner';
 import IconButton from './components/IconButton';
-import HistoryDrawer from './components/HistoryDrawer';
+import PromptExamples from './components/PromptExamples';
+import SavedPrompts from './components/SavedPrompts';
 import { CopyIcon, CheckIcon, SparklesIcon, TrashIcon, CloseIcon, RefreshIcon } from './components/Icons';
 
 // Extend the window object with SpeechRecognition
@@ -78,6 +79,7 @@ const App: React.FC = () => {
         stepByStep: '',
         notes: '',
     });
+    const [niche, setNiche] = useState('');
     const [generatedPrompt, setGeneratedPrompt] = useState<string>('');
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
@@ -85,6 +87,7 @@ const App: React.FC = () => {
     const [listeningField, setListeningField] = useState<keyof VoiceAgentPromptData | null>(null);
     const [micSupported, setMicSupported] = useState<boolean>(false);
     const recognitionRef = useRef<any | null>(null);
+    const formRef = useRef<HTMLDivElement>(null);
     
     const [history, setHistory] = useState<PromptHistoryItem[]>([]);
     const [toastMessage, setToastMessage] = useState<string>('');
@@ -92,7 +95,7 @@ const App: React.FC = () => {
     const [autoSavedData, setAutoSavedData] = useState<VoiceAgentPromptData | null>(null);
     const promptDataRef = useRef(promptData);
     promptDataRef.current = promptData;
-
+    
     // Auto-save logic
     useEffect(() => {
         const intervalId = setInterval(() => {
@@ -118,15 +121,14 @@ const App: React.FC = () => {
             const savedPrompt = localStorage.getItem('autoSavedPrompt');
             if (savedPrompt) setAutoSavedData(JSON.parse(savedPrompt));
         } catch (e) { console.error("Failed to load auto-saved prompt from localStorage", e); }
+        
     }, []);
 
     // Persist history to localStorage whenever it changes
     useEffect(() => {
         try {
             localStorage.setItem('promptHistory', JSON.stringify(history));
-        } catch (e) {
-            console.error("Failed to save history to localStorage", e);
-        }
+        } catch (e) { console.error("Failed to save history to localStorage", e); }
     }, [history]);
 
     // Speech Recognition Setup
@@ -177,12 +179,23 @@ const App: React.FC = () => {
             recognitionRef.current.start();
         }
     };
+    
+    const handleSelectExample = (data: VoiceAgentPromptData) => {
+        setPromptData(data);
+        setGeneratedPrompt('');
+        setNiche('');
+        setError(null);
+        formRef.current?.scrollIntoView({ behavior: 'smooth' });
+        setToastMessage('Plantilla cargada. ¡Ya puedes editarla!');
+        setTimeout(() => setToastMessage(''), 3000);
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
         const trimmedRole = promptData.agentRole.trim();
         const trimmedTask = promptData.task.trim();
+        const trimmedNiche = niche.trim();
         const minLength = 3;
 
         if (trimmedRole.length < minLength) {
@@ -194,10 +207,16 @@ const App: React.FC = () => {
             setError(`El campo 'Tarea Principal' es obligatorio y debe tener al menos ${minLength} caracteres.`);
             return;
         }
+        
+        if (trimmedNiche.length < minLength) {
+            setError(`El campo 'Nicho del Prompt' es obligatorio y debe tener al menos ${minLength} caracteres.`);
+            return;
+        }
 
         setIsLoading(true);
         setError(null);
         setGeneratedPrompt('');
+
         try {
             const perfectPrompt = await generatePerfectPrompt(promptData);
             setGeneratedPrompt(perfectPrompt);
@@ -206,6 +225,7 @@ const App: React.FC = () => {
                 promptData,
                 generatedPrompt: perfectPrompt,
                 timestamp: Date.now(),
+                niche: trimmedNiche,
             };
             setHistory(prevHistory => [newHistoryItem, ...prevHistory]);
             setToastMessage('Prompt guardado en la base de datos');
@@ -214,6 +234,8 @@ const App: React.FC = () => {
             // Clear auto-saved data on successful submission
             localStorage.removeItem('autoSavedPrompt');
             setAutoSavedData(null);
+            setNiche('');
+
         } catch (err) {
             const errorMessage = (err as Error).message;
             setError(errorMessage);
@@ -234,13 +256,18 @@ const App: React.FC = () => {
     const handleSelectHistoryItem = (item: PromptHistoryItem) => {
         setPromptData(item.promptData);
         setGeneratedPrompt(item.generatedPrompt);
+        setNiche(item.niche);
+        formRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    const handleClearHistory = () => {
-        if (window.confirm('¿Estás seguro de que quieres borrar todos los prompts guardados? Esta acción no se puede deshacer.')) {
-            setHistory([]);
+    const handleDeleteHistoryItem = (id: string) => {
+        if (window.confirm('¿Estás seguro de que quieres borrar este prompt?')) {
+            setHistory(prev => prev.filter(item => item.id !== id));
+            setToastMessage('Prompt eliminado.');
+            setTimeout(() => setToastMessage(''), 3000);
         }
     };
+
 
     const handleRestoreAutoSave = () => {
         if (autoSavedData) {
@@ -259,137 +286,18 @@ const App: React.FC = () => {
             agentRole: '', personality: '', toneAndLanguage: '', responseGuidelines: '',
             task: '', context: '', stepByStep: '', notes: '',
         });
+        setNiche('');
         setGeneratedPrompt('');
         setError(null);
         localStorage.removeItem('autoSavedPrompt');
         setAutoSavedData(null);
     };
-    
-    // --- Export Handlers ---
-    const createDownloadLink = (blob: Blob, fileName: string) => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    };
-
-    const handleExportMarkdown = () => {
-        if (history.length === 0) {
-            setToastMessage('No hay nada que exportar.');
-            setTimeout(() => setToastMessage(''), 3000);
-            return;
-        }
-        const markdownContent = history.map(item => {
-            const { promptData, generatedPrompt, timestamp } = item;
-            const date = new Date(timestamp).toLocaleString('es-ES');
-
-            return `
-# Prompt Creado el ${date}
----
-
-## 📥 Datos de Entrada
-
-- **Rol del Agente:** ${promptData.agentRole || 'N/A'}
-- **Tarea Principal:** ${promptData.task || 'N/A'}
-- **Personalidad:** ${promptData.personality || 'N/A'}
-- **Tono y Lenguaje:** ${promptData.toneAndLanguage || 'N/A'}
-- **Contexto:** ${promptData.context || 'N/A'}
-- **Directrices de Respuesta:** ${promptData.responseGuidelines || 'N/A'}
-- **Flujo de Conversación:** ${promptData.stepByStep || 'N/A'}
-- **Notas Adicionales:** ${promptData.notes || 'N/A'}
-
-## 💡 Prompt Generado
-
-\`\`\`markdown
-${generatedPrompt}
-\`\`\`
-`;
-        }).join('\n\n---\n\n');
-
-        const blob = new Blob([markdownContent.trim()], { type: 'text/markdown' });
-        createDownloadLink(blob, 'prompts_historial.md');
-    };
-
-    const handleExportPdf = () => {
-        if (history.length === 0) {
-            setToastMessage('No hay nada que exportar.');
-            setTimeout(() => setToastMessage(''), 3000);
-            return;
-        }
-        
-        const htmlContent = `
-          <html>
-            <head>
-              <title>Historial de Prompts</title>
-              <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; color: #333; padding: 20px; }
-                .prompt-item { page-break-inside: avoid; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-                h1 { text-align: center; color: #111; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 30px; }
-                h2 { color: #444; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-                h3 { color: #555; }
-                pre { background-color: #f6f8fa; padding: 16px; overflow: auto; font-size: 90%; line-height: 1.45; border-radius: 6px; white-space: pre-wrap; word-wrap: break-word; border: 1px solid #e1e4e8; }
-                .meta-data { background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #eee; }
-                .meta-data p { margin: 5px 0; }
-                @media print {
-                    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 0; }
-                    .prompt-item { box-shadow: none; border: 1px solid #ccc; }
-                }
-              </style>
-            </head>
-            <body>
-              <h1>Historial de Prompts</h1>
-              ${history.map(item => {
-                  const { promptData, generatedPrompt, timestamp } = item;
-                  const date = new Date(timestamp).toLocaleString('es-ES');
-                  const escapeHtml = (unsafe) => unsafe
-                     .replace(/&/g, "&amp;")
-                     .replace(/</g, "&lt;")
-                     .replace(/>/g, "&gt;")
-                     .replace(/"/g, "&quot;")
-                     .replace(/'/g, "&#039;");
-                  
-                  return `
-                    <div class="prompt-item">
-                      <h2>Prompt del ${date}</h2>
-                      <div class="meta-data">
-                        <p><strong>Rol del Agente:</strong> ${escapeHtml(promptData.agentRole || 'N/A')}</p>
-                        <p><strong>Tarea Principal:</strong> ${escapeHtml(promptData.task || 'N/A')}</p>
-                        <p><strong>Personalidad:</strong> ${escapeHtml(promptData.personality || 'N/A')}</p>
-                        <p><strong>Tono y Lenguaje:</strong> ${escapeHtml(promptData.toneAndLanguage || 'N/A')}</p>
-                        <p><strong>Contexto:</strong> ${escapeHtml(promptData.context || 'N/A')}</p>
-                        <p><strong>Directrices de Respuesta:</strong> ${escapeHtml(promptData.responseGuidelines || 'N/A')}</p>
-                        <p><strong>Flujo de Conversación:</strong> ${escapeHtml(promptData.stepByStep || 'N/A')}</p>
-                        <p><strong>Notas Adicionales:</strong> ${escapeHtml(promptData.notes || 'N/A')}</p>
-                      </div>
-                      <h3>Prompt Generado:</h3>
-                      <pre>${escapeHtml(generatedPrompt)}</pre>
-                    </div>
-                  `;
-              }).join('')}
-            </body>
-          </html>
-        `;
-
-        const printWindow = window.open('', '_blank');
-        if (printWindow) {
-            printWindow.document.write(htmlContent);
-            printWindow.document.close();
-            printWindow.focus();
-            printWindow.print();
-        } else {
-            alert('Por favor, permite las ventanas emergentes para imprimir el PDF.');
-        }
-    };
 
     return (
         <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center p-4 sm:p-6 lg:p-8 font-sans">
             <Toast message={toastMessage} show={!!toastMessage} />
-            <div className="w-full max-w-4xl mx-auto mb-40"> {/* Add margin-bottom to avoid overlap with drawer */}
-                <header className="text-center mb-8 relative">
+            <div className="w-full max-w-5xl mx-auto mb-20">
+                <header className="relative text-center mb-12">
                     <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">
                         Creador de System Prompts para Agentes de Voz
                     </h1>
@@ -398,7 +306,9 @@ ${generatedPrompt}
                     </p>
                 </header>
 
-                <main className="bg-gray-800/50 backdrop-blur-sm p-6 sm:p-8 rounded-2xl shadow-2xl border border-gray-700">
+                <PromptExamples onSelectExample={handleSelectExample} />
+
+                <main ref={formRef} className="bg-gray-800/50 backdrop-blur-sm p-6 sm:p-8 rounded-2xl shadow-2xl border border-gray-700 mt-12">
                     {autoSavedData && (
                         <AutoSaveNotification
                             onRestore={handleRestoreAutoSave}
@@ -512,6 +422,17 @@ ${generatedPrompt}
                                     micSupported={micSupported}
                                 />
                             </div>
+
+                             <div className="md:col-span-2 pt-4 border-t border-gray-700">
+                                <InputField
+                                    label="Nicho del Prompt"
+                                    value={niche}
+                                    onChange={(e) => setNiche(e.target.value)}
+                                    placeholder="Ej: Peluquería, Inmobiliaria, Restaurante..."
+                                    helpText="Categoriza este prompt para encontrarlo fácilmente. (Obligatorio)"
+                                    required
+                                />
+                            </div>
                         </div>
                         {error && <p className="text-red-400 text-center mt-4">{error}</p>}
                         <div className="mt-8 flex justify-center">
@@ -521,7 +442,7 @@ ${generatedPrompt}
                                 className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white font-bold rounded-lg shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
                             >
                                 {isLoading ? <Spinner /> : <SparklesIcon />}
-                                {isLoading ? 'Generando...' : 'Crear System Prompt'}
+                                {isLoading ? 'Generando...' : 'Crear y Guardar Prompt'}
                             </button>
                         </div>
                     </form>
@@ -551,14 +472,13 @@ ${generatedPrompt}
                         </div>
                     )}
                 </main>
+
+                <SavedPrompts 
+                    history={history}
+                    onSelect={handleSelectHistoryItem}
+                    onDelete={handleDeleteHistoryItem}
+                />
             </div>
-            <HistoryDrawer
-                history={history}
-                onSelect={handleSelectHistoryItem}
-                onClear={handleClearHistory}
-                onExportMarkdown={handleExportMarkdown}
-                onExportPdf={handleExportPdf}
-            />
         </div>
     );
 };
