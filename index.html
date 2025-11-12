@@ -4,13 +4,88 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Creador de System Prompts para Agentes de Voz</title>
+    <title>VoxWizard IA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       body {
         font-family: 'Inter', sans-serif;
       }
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+      
+      @media print {
+        body * {
+          visibility: hidden;
+        }
+        .print-section, .print-section * {
+          visibility: visible;
+        }
+        .print-section {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          margin: 0;
+          padding: 20px;
+        }
+        #print-header {
+            display: block !important;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        #print-header h2 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: black;
+        }
+        .no-print {
+            display: none !important;
+        }
+        body {
+          background-color: white !important;
+          color: black !important;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        thead {
+            background-color: #f2f2f2 !important;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            color: black !important;
+        }
+        th {
+            color: black !important;
+            text-transform: none;
+        }
+        tr {
+            page-break-inside: avoid;
+            background-color: white !important;
+        }
+        .line-clamp-1, .line-clamp-2 {
+            -webkit-line-clamp: unset !important;
+            display: block !important;
+        }
+        span[class*="bg-blue-900"] {
+            background-color: transparent !important;
+            color: black !important;
+            padding: 2px 4px !important;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-weight: normal;
+        }
+        .font-bold {
+            font-weight: bold !important;
+        }
+        .text-gray-500 {
+            color: #555 !important;
+        }
+        .text-gray-200 {
+            color: black !important;
+        }
+      }
     </style>
 <script type="importmap">
 {

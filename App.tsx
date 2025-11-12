@@ -6,7 +6,8 @@ import Spinner from './components/Spinner';
 import IconButton from './components/IconButton';
 import PromptExamples from './components/PromptExamples';
 import SavedPrompts from './components/SavedPrompts';
-import { CopyIcon, CheckIcon, SparklesIcon, TrashIcon, CloseIcon, RefreshIcon } from './components/Icons';
+import { CopyIcon, CheckIcon, SparklesIcon, TrashIcon, CloseIcon, RefreshIcon, PlusIcon } from './components/Icons';
+import Logo from './components/Logo';
 
 // Extend the window object with SpeechRecognition
 interface CustomWindow extends Window {
@@ -90,7 +91,7 @@ const App: React.FC = () => {
     const formRef = useRef<HTMLDivElement>(null);
     
     const [history, setHistory] = useState<PromptHistoryItem[]>([]);
-    const [toastMessage, setToastMessage] = useState<string>('');
+    const [toastMessage, setToastMessage] = useState('');
 
     const [autoSavedData, setAutoSavedData] = useState<VoiceAgentPromptData | null>(null);
     const promptDataRef = useRef(promptData);
@@ -130,6 +131,7 @@ const App: React.FC = () => {
             localStorage.setItem('promptHistory', JSON.stringify(history));
         } catch (e) { console.error("Failed to save history to localStorage", e); }
     }, [history]);
+    
 
     // Speech Recognition Setup
     useEffect(() => {
@@ -187,6 +189,46 @@ const App: React.FC = () => {
         setError(null);
         formRef.current?.scrollIntoView({ behavior: 'smooth' });
         setToastMessage('Plantilla cargada. ¡Ya puedes editarla!');
+        setTimeout(() => setToastMessage(''), 3000);
+    };
+
+    const handleSaveToHistory = () => {
+        const trimmedNiche = niche.trim();
+        const minLength = 3;
+
+        if (trimmedNiche.length < minLength) {
+            setError(`El campo 'Nicho del Prompt' es obligatorio y debe tener al menos ${minLength} caracteres.`);
+            return;
+        }
+        
+        if (!generatedPrompt) {
+            setError("No hay ningún prompt generado para guardar.");
+            return;
+        }
+        setError(null);
+
+        const newHistoryItem: PromptHistoryItem = {
+            id: new Date().toISOString(),
+            promptData,
+            generatedPrompt,
+            timestamp: Date.now(),
+            niche: trimmedNiche,
+        };
+        
+        const isDuplicate = history.some(item => 
+            item.generatedPrompt === newHistoryItem.generatedPrompt && 
+            JSON.stringify(item.promptData) === JSON.stringify(newHistoryItem.promptData) &&
+            item.niche === newHistoryItem.niche
+        );
+
+        if (isDuplicate) {
+            setToastMessage('Este prompt ya está en tu historial.');
+            setTimeout(() => setToastMessage(''), 3000);
+            return;
+        }
+
+        setHistory(prevHistory => [newHistoryItem, ...prevHistory]);
+        setToastMessage('Prompt guardado en la base de datos');
         setTimeout(() => setToastMessage(''), 3000);
     };
 
@@ -268,7 +310,6 @@ const App: React.FC = () => {
         }
     };
 
-
     const handleRestoreAutoSave = () => {
         if (autoSavedData) {
             setPromptData(autoSavedData);
@@ -292,16 +333,19 @@ const App: React.FC = () => {
         localStorage.removeItem('autoSavedPrompt');
         setAutoSavedData(null);
     };
-
+    
     return (
         <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center p-4 sm:p-6 lg:p-8 font-sans">
             <Toast message={toastMessage} show={!!toastMessage} />
             <div className="w-full max-w-5xl mx-auto mb-20">
                 <header className="relative text-center mb-12">
-                    <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">
-                        Creador de System Prompts para Agentes de Voz
-                    </h1>
-                    <p className="mt-2 text-lg text-gray-400">
+                    <div className="flex justify-center items-center gap-3 sm:gap-4">
+                        <Logo />
+                        <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">
+                            VoxWizard IA
+                        </h1>
+                    </div>
+                    <p className="mt-4 text-lg text-gray-400">
                         Diseña prompts efectivos para IA de voz en plataformas como Retell y Vapi.
                     </p>
                 </header>
@@ -435,7 +479,7 @@ const App: React.FC = () => {
                             </div>
                         </div>
                         {error && <p className="text-red-400 text-center mt-4">{error}</p>}
-                        <div className="mt-8 flex justify-center">
+                        <div className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
                             <button
                                 type="submit"
                                 disabled={isLoading}
@@ -444,6 +488,17 @@ const App: React.FC = () => {
                                 {isLoading ? <Spinner /> : <SparklesIcon />}
                                 {isLoading ? 'Generando...' : 'Crear y Guardar Prompt'}
                             </button>
+                             {generatedPrompt && !isLoading && (
+                                <button
+                                    type="button"
+                                    onClick={handleSaveToHistory}
+                                    className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg shadow-md transition-colors duration-200"
+                                    aria-label="Guardar el prompt actual en el historial"
+                                >
+                                    <PlusIcon />
+                                    Guardar en Historial
+                                </button>
+                            )}
                         </div>
                     </form>
 

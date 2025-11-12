@@ -1,5 +1,5 @@
 {
-  "name": "Creador de System Prompts para Agentes de Voz",
+  "name": "VoxWizard IA",
   "description": "Crea system prompts detallados y efectivos para agentes de voz de IA, optimizados para plataformas como Retell AI y Vapi.",
   "requestFramePermissions": [
     "microphone"

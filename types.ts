@@ -1,10 +1,11 @@
 export interface VoiceAgentPromptData {
+    // The order of these fields matches the form input order
     agentRole: string;
+    task: string;
     personality: string;
     toneAndLanguage: string;
-    responseGuidelines: string;
-    task: string;
     context: string;
+    responseGuidelines: string;
     stepByStep: string;
     notes: string;
 }
@@ -17,7 +18,7 @@ export interface PromptHistoryItem {
     niche: string;
 }
 
-// FIX: Added the missing ApiKey interface to resolve the import error.
+// FIX: Add and export the ApiKey interface, which is used in ApiKeyManager.tsx.
 export interface ApiKey {
     name: string;
     key: string;
