@@ -125,8 +125,8 @@ ${filledSections}
         console.error("Error al llamar a la API de Gemini:", error);
         if (error instanceof Error) {
             // Provide a more generic message to the user
-            // FIX: Updated the error message to reflect that the API key is managed via environment variables.
-            throw new Error(`Error al generar el prompt con IA. Revisa tu API Key o inténtalo de nuevo más tarde.`);
+            // FIX: Updated error message to not ask the user to check their API key, as it's handled by environment variables.
+            throw new Error(`Ocurrió un error al generar el prompt con IA. Inténtalo de nuevo más tarde.`);
         }
         throw new Error("Ocurrió un error desconocido al generar el prompt con IA.");
     }

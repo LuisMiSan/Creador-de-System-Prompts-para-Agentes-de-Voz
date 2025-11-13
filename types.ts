@@ -10,12 +10,19 @@ export interface VoiceAgentPromptData {
     notes: string;
 }
 
+export interface DynamicVariable {
+    id: string;
+    name: string;
+    value: string;
+}
+
 export interface PromptHistoryItem {
     id: string;
     promptData: VoiceAgentPromptData;
     generatedPrompt: string;
     timestamp: number;
     niche: string;
+    variables?: DynamicVariable[];
 }
 
 // FIX: Removed the ApiKey interface. As per guidelines, the API key should be managed through environment variables, not through the UI.

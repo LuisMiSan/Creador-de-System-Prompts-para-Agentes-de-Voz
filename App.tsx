@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 // FIX: Removed ApiKey as it's no longer needed after removing the API key management UI.
-import { VoiceAgentPromptData, PromptHistoryItem } from './types';
+import { VoiceAgentPromptData, PromptHistoryItem, DynamicVariable } from './types';
 import { generatePerfectPrompt } from './services/geminiService';
 import InputField from './components/InputField';
 import Spinner from './components/Spinner';
@@ -8,8 +8,10 @@ import IconButton from './components/IconButton';
 import PromptExamples from './components/PromptExamples';
 import SavedPrompts from './components/SavedPrompts';
 // FIX: Removed ApiKeyManager as API key management via UI is against the guidelines.
-import { CopyIcon, CheckIcon, SparklesIcon, TrashIcon, CloseIcon, RefreshIcon, PlusIcon } from './components/Icons';
+import { CopyIcon, CheckIcon, SparklesIcon, TrashIcon, CloseIcon, RefreshIcon, PlusIcon, PdfIcon } from './components/Icons';
 import Logo from './components/Logo';
+import DynamicVariables from './components/DynamicVariables';
+import MarkdownEditor from './components/MarkdownEditor';
 
 // Extend the window object with SpeechRecognition
 interface CustomWindow extends Window {
@@ -69,6 +71,10 @@ const AutoSaveNotification: React.FC<AutoSaveNotificationProps> = ({ onRestore, 
     );
 };
 
+interface AutoSavedDraft {
+    promptData: VoiceAgentPromptData;
+    variables: DynamicVariable[];
+}
 
 // --- Main App Component ---
 const App: React.FC = () => {
@@ -82,6 +88,7 @@ const App: React.FC = () => {
         stepByStep: '',
         notes: '',
     });
+    const [variables, setVariables] = useState<DynamicVariable[]>([]);
     const [niche, setNiche] = useState('');
     const [generatedPrompt, setGeneratedPrompt] = useState<string>('');
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -95,9 +102,11 @@ const App: React.FC = () => {
     const [history, setHistory] = useState<PromptHistoryItem[]>([]);
     const [toastMessage, setToastMessage] = useState('');
 
-    const [autoSavedData, setAutoSavedData] = useState<VoiceAgentPromptData | null>(null);
+    const [autoSavedData, setAutoSavedData] = useState<AutoSavedDraft | null>(null);
     const promptDataRef = useRef(promptData);
     promptDataRef.current = promptData;
+    const variablesRef = useRef(variables);
+    variablesRef.current = variables;
 
     // FIX: Removed API Key Management State as per guidelines.
     
@@ -105,10 +114,12 @@ const App: React.FC = () => {
     useEffect(() => {
         const intervalId = setInterval(() => {
             const currentData = promptDataRef.current;
+            const currentVariables = variablesRef.current;
             const isDataEmpty = Object.values(currentData).every(value => value === '');
-            
-            if (!isDataEmpty) {
-                localStorage.setItem('autoSavedPrompt', JSON.stringify(currentData));
+            const areVariablesEmpty = currentVariables.length === 0;
+
+            if (!isDataEmpty || !areVariablesEmpty) {
+                localStorage.setItem('autoSavedPrompt', JSON.stringify({ promptData: currentData, variables: currentVariables }));
             }
         }, 30000); // Save every 30 seconds
 
@@ -191,6 +202,7 @@ const App: React.FC = () => {
         setGeneratedPrompt('');
         setNiche('');
         setError(null);
+        setVariables([]);
         formRef.current?.scrollIntoView({ behavior: 'smooth' });
         setToastMessage('Plantilla cargada. ¡Ya puedes editarla!');
         setTimeout(() => setToastMessage(''), 3000);
@@ -217,6 +229,7 @@ const App: React.FC = () => {
             generatedPrompt,
             timestamp: Date.now(),
             niche: trimmedNiche,
+            variables,
         };
         
         const isDuplicate = history.some(item => 
@@ -265,9 +278,22 @@ const App: React.FC = () => {
         setError(null);
         setGeneratedPrompt('');
 
+        // Substitute variables before sending to the API
+        const substitutedPromptData = { ...promptData };
+        for (const variable of variables) {
+            if (variable.name) {
+                const regex = new RegExp(`{{${variable.name}}}`, 'g');
+                for (const key in substitutedPromptData) {
+                    substitutedPromptData[key as keyof VoiceAgentPromptData] = 
+                        substitutedPromptData[key as keyof VoiceAgentPromptData].replace(regex, variable.value);
+                }
+            }
+        }
+
+
         try {
             // FIX: Removed passing the API key, as it's now handled by the geminiService.
-            const perfectPrompt = await generatePerfectPrompt(promptData);
+            const perfectPrompt = await generatePerfectPrompt(substitutedPromptData);
             setGeneratedPrompt(perfectPrompt);
             const newHistoryItem: PromptHistoryItem = {
                 id: new Date().toISOString(),
@@ -275,6 +301,7 @@ const App: React.FC = () => {
                 generatedPrompt: perfectPrompt,
                 timestamp: Date.now(),
                 niche: trimmedNiche,
+                variables,
             };
             setHistory(prevHistory => [newHistoryItem, ...prevHistory]);
             setToastMessage('Prompt guardado en la base de datos');
@@ -302,10 +329,26 @@ const App: React.FC = () => {
         }
     };
 
+    const handleExportPdf = () => {
+        const printArea = document.getElementById('generated-prompt-print-area');
+        if (!printArea) return;
+
+        printArea.classList.add('print-section');
+
+        const afterPrint = () => {
+            printArea.classList.remove('print-section');
+            window.removeEventListener('afterprint', afterPrint);
+        };
+        window.addEventListener('afterprint', afterPrint);
+        
+        window.print();
+    };
+
     const handleSelectHistoryItem = (item: PromptHistoryItem) => {
         setPromptData(item.promptData);
         setGeneratedPrompt(item.generatedPrompt);
         setNiche(item.niche);
+        setVariables(item.variables || []);
         formRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
@@ -319,8 +362,10 @@ const App: React.FC = () => {
 
     const handleRestoreAutoSave = () => {
         if (autoSavedData) {
-            setPromptData(autoSavedData);
+            setPromptData(autoSavedData.promptData);
+            setVariables(autoSavedData.variables || []);
             setAutoSavedData(null);
+            localStorage.removeItem('autoSavedPrompt');
         }
     };
 
@@ -337,9 +382,24 @@ const App: React.FC = () => {
         setNiche('');
         setGeneratedPrompt('');
         setError(null);
+        setVariables([]);
         localStorage.removeItem('autoSavedPrompt');
         setAutoSavedData(null);
     };
+
+    // --- Dynamic Variable Handlers ---
+    const handleAddVariable = () => {
+        setVariables(prev => [...prev, { id: Date.now().toString(), name: '', value: '' }]);
+    };
+
+    const handleUpdateVariable = (id: string, field: 'name' | 'value', fieldValue: string) => {
+        setVariables(prev => prev.map(v => v.id === id ? { ...v, [field]: fieldValue } : v));
+    };
+    
+    const handleDeleteVariable = (id: string) => {
+        setVariables(prev => prev.filter(v => v.id !== id));
+    };
+
 
     // --- FIX: Removed API Key Handlers ---
     
@@ -349,7 +409,7 @@ const App: React.FC = () => {
             {/* FIX: Removed ApiKeyManager component to comply with guidelines. */}
 
             <div className="w-full max-w-5xl mx-auto mb-20">
-                <header className="relative text-center mb-12">
+                <header className="relative text-center mb-12 no-print">
                      {/* FIX: Removed the settings button for API key management. */}
                     <div className="flex justify-center items-center gap-3 sm:gap-4">
                         <Logo />
@@ -364,7 +424,7 @@ const App: React.FC = () => {
 
                 <PromptExamples onSelectExample={handleSelectExample} />
 
-                <main ref={formRef} className="bg-gray-800/50 backdrop-blur-sm p-6 sm:p-8 rounded-2xl shadow-2xl border border-gray-700 mt-12">
+                <main ref={formRef} className="bg-gray-800/50 backdrop-blur-sm p-6 sm:p-8 rounded-2xl shadow-2xl border border-gray-700 mt-12 no-print">
                     {autoSavedData && (
                         <AutoSaveNotification
                             onRestore={handleRestoreAutoSave}
@@ -490,6 +550,16 @@ const App: React.FC = () => {
                                     required
                                 />
                             </div>
+
+                             <div className="md:col-span-2 pt-4 border-t border-gray-700">
+                                <DynamicVariables 
+                                    variables={variables}
+                                    onAdd={handleAddVariable}
+                                    onUpdate={handleUpdateVariable}
+                                    onDelete={handleDeleteVariable}
+                                />
+                            </div>
+
                         </div>
                         {error && <p className="text-red-400 text-center mt-4">{error}</p>}
                         <div className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
@@ -514,32 +584,42 @@ const App: React.FC = () => {
                             )}
                         </div>
                     </form>
-
-                    {(isLoading || generatedPrompt) && (
-                        <div className="mt-10">
-                            <h2 className="text-2xl font-semibold text-center mb-4 text-gray-300">Tu System Prompt Optimizado</h2>
-                            <div className="relative bg-gray-900/70 p-6 rounded-lg border border-gray-700 min-h-[150px] whitespace-pre-wrap font-mono text-sm">
-                                {isLoading ? (
-                                    <div className="flex items-center justify-center h-full">
-                                        <div className="animate-pulse text-gray-500">Analizando y construyendo...</div>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <div className="absolute top-2 right-2">
-                                            <IconButton
-                                                onClick={handleCopy}
-                                                text={isCopied ? 'Copiado' : 'Copiar'}
-                                                icon={isCopied ? <CheckIcon /> : <CopyIcon />}
-                                                className={isCopied ? 'bg-green-600/30 text-green-300' : 'bg-gray-700/50 hover:bg-gray-600/50 text-gray-300'}
-                                            />
-                                        </div>
-                                        <p>{generatedPrompt}</p>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    )}
                 </main>
+                
+                {(isLoading || generatedPrompt) && (
+                    <div id="generated-prompt-print-area" className="mt-10">
+                         <div className="print-header-content hidden">
+                            <h2>System Prompt Optimizado</h2>
+                        </div>
+                        <h2 className="text-2xl font-semibold text-center mb-4 text-gray-300 no-print">Tu System Prompt Optimizado</h2>
+                        <div className="relative bg-gray-900/70 p-6 rounded-lg border border-gray-700 min-h-[150px]">
+                            {isLoading ? (
+                                <div className="flex items-center justify-center h-full">
+                                    <div className="animate-pulse text-gray-500">Analizando y construyendo...</div>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="absolute top-2 right-2 flex gap-2 no-print">
+                                        <IconButton
+                                            onClick={handleCopy}
+                                            text={isCopied ? 'Copiado' : 'Copiar'}
+                                            icon={isCopied ? <CheckIcon /> : <CopyIcon />}
+                                            className={isCopied ? 'bg-green-600/30 text-green-300' : 'bg-gray-700/50 hover:bg-gray-600/50 text-gray-300'}
+                                        />
+                                        <IconButton
+                                            onClick={handleExportPdf}
+                                            text="Exportar PDF"
+                                            icon={<PdfIcon />}
+                                            className="bg-gray-700/50 hover:bg-gray-600/50 text-gray-300"
+                                        />
+                                    </div>
+                                    <MarkdownEditor value={generatedPrompt} onChange={setGeneratedPrompt} />
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
+
 
                 <SavedPrompts 
                     history={history}

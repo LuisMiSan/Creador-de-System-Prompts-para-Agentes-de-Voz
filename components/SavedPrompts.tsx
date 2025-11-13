@@ -26,6 +26,10 @@ const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete
             markdownContent += `**Fecha:** ${new Date(item.timestamp).toLocaleString('es-ES')}\n\n`;
             markdownContent += "### Datos de Entrada:\n";
             markdownContent += "```json\n" + JSON.stringify(item.promptData, null, 2) + "\n```\n\n";
+             if (item.variables && item.variables.length > 0) {
+                markdownContent += "### Variables Dinámicas:\n";
+                markdownContent += "```json\n" + JSON.stringify(item.variables.reduce((acc, v) => ({...acc, [v.name]: v.value}), {}), null, 2) + "\n```\n\n";
+            }
             markdownContent += "### Prompt Generado:\n";
             markdownContent += item.generatedPrompt + "\n\n";
             markdownContent += "---\n\n";
@@ -43,6 +47,17 @@ const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete
     };
 
     const handlePrint = () => {
+        const printArea = document.getElementById('history-print-area');
+        if (!printArea) return;
+
+        printArea.classList.add('print-section');
+
+        const afterPrint = () => {
+            printArea.classList.remove('print-section');
+            window.removeEventListener('afterprint', afterPrint);
+        };
+        window.addEventListener('afterprint', afterPrint);
+
         window.print();
     };
 
@@ -58,7 +73,7 @@ const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete
 
 
     return (
-        <section className="mt-12 print-section">
+        <section id="history-print-area" className="mt-12">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-8 no-print">
                 <div className="text-center sm:text-left">
                     <h2 className="text-2xl font-bold text-gray-300 flex items-center justify-center sm:justify-start gap-3">
@@ -87,7 +102,7 @@ const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete
                 )}
             </div>
 
-            <div id="print-header" className="hidden">
+            <div className="print-header-content hidden">
                  <h2 className="text-2xl font-bold">Mi Base de Datos de Prompts</h2>
             </div>
 
@@ -180,6 +195,23 @@ const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete
                                                             {renderDetail("Flujo de Conversación (Paso a Paso)", item.promptData.stepByStep, true)}
                                                             {renderDetail("Notas Adicionales", item.promptData.notes)}
                                                             
+                                                             {item.variables && item.variables.length > 0 && (
+                                                                <div className="pt-4 border-t border-gray-700">
+                                                                    <dt className="font-semibold text-gray-400 mb-2">Variables Dinámicas</dt>
+                                                                    <dd>
+                                                                        <ul className="space-y-2">
+                                                                            {item.variables.map(v => (
+                                                                                <li key={v.id} className="flex items-center gap-2 p-2 bg-gray-900 rounded-md">
+                                                                                    <span className="font-mono text-xs bg-gray-700 text-blue-300 px-2 py-1 rounded">{`{{${v.name}}}`}</span>
+                                                                                    <span className="text-gray-400">→</span>
+                                                                                    <span className="text-gray-200">{v.value}</span>
+                                                                                </li>
+                                                                            ))}
+                                                                        </ul>
+                                                                    </dd>
+                                                                </div>
+                                                            )}
+
                                                             {item.generatedPrompt && (
                                                                 <div className="pt-4 border-t border-gray-700">
                                                                     <dt className="font-semibold text-gray-400 mb-1">Prompt Generado</dt>

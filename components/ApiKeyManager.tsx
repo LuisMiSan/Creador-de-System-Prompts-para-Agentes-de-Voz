@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
-import { ApiKey } from '../types';
+// FIX: The `ApiKey` type was removed from `../types` to enforce API key management via environment variables.
+// This component is obsolete, but to fix the compilation error, a local `ApiKey` interface is defined below.
+// import { ApiKey } from '../types';
 import { CloseIcon, KeyIcon, PlusIcon, TrashIcon, CheckIcon } from './Icons';
+
+interface ApiKey {
+    name: string;
+    key: string;
+}
 
 interface ApiKeyManagerProps {
     isOpen: boolean;

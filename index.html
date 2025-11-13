@@ -12,6 +12,72 @@
       }
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
       
+      .hidden-for-screen {
+        display: none;
+      }
+
+      /* Markdown Preview Styles for Screen */
+      .prose-styles {
+        color: #d1d5db; /* text-gray-300 */
+        line-height: 1.7;
+      }
+      .prose-styles h3 {
+        font-size: 1.25rem; /* text-xl */
+        font-weight: 600; /* font-semibold */
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #4b5563; /* border-gray-600 */
+        color: #f9fafb; /* text-gray-50 */
+      }
+      .prose-styles ul, .prose-styles ol {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+      .prose-styles ul { list-style-type: disc; }
+      .prose-styles ol { list-style-type: decimal; }
+      .prose-styles li {
+        margin-bottom: 0.5rem;
+      }
+      .prose-styles p {
+        margin-bottom: 1rem;
+      }
+      .prose-styles a {
+        color: #60a5fa; /* text-blue-400 */
+        text-decoration: underline;
+      }
+      .prose-styles strong {
+        font-weight: 700;
+        color: #e5e7eb; /* text-gray-200 */
+      }
+      .prose-styles code {
+        background-color: #374151; /* bg-gray-700 */
+        color: #f3f4f6; /* text-gray-100 */
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 0.9em;
+      }
+      .prose-styles pre {
+        background-color: #111827; /* bg-gray-900 */
+        border: 1px solid #374151; /* border-gray-700 */
+        border-radius: 0.5rem;
+        padding: 1rem;
+        overflow-x: auto;
+        margin-bottom: 1rem;
+      }
+      .prose-styles pre code {
+        background-color: transparent;
+        padding: 0;
+      }
+      .prose-styles blockquote {
+        border-left: 4px solid #4b5563; /* border-gray-600 */
+        padding-left: 1rem;
+        margin-left: 0;
+        font-style: italic;
+        color: #9ca3af; /* text-gray-400 */
+      }
+
       @media print {
         body * {
           visibility: hidden;
@@ -27,12 +93,12 @@
           margin: 0;
           padding: 20px;
         }
-        #print-header {
+        .print-header-content {
             display: block !important;
             text-align: center;
             margin-bottom: 1rem;
         }
-        #print-header h2 {
+        .print-header-content h2 {
             font-size: 1.5rem;
             font-weight: bold;
             color: black;
@@ -50,6 +116,8 @@
         }
         thead {
             background-color: #f2f2f2 !important;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
         }
         th, td {
             border: 1px solid #ddd;
@@ -76,6 +144,52 @@
             border: 1px solid #ccc;
             font-weight: normal;
         }
+        
+        .hidden-for-screen {
+            display: block !important;
+        }
+
+        .prose-styles, .prose-styles * {
+            color: black !important;
+            background: transparent !important;
+        }
+        .prose-styles {
+            font-family: Georgia, serif !important;
+            font-size: 11pt !important;
+        }
+        .prose-styles h3 {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+            border-bottom: 2px solid #ccc !important;
+        }
+        .prose-styles code {
+            font-family: 'Courier New', Courier, monospace !important;
+            background-color: #f0f0f0 !important;
+            border: 1px solid #ddd !important;
+            padding: 1px 3px !important;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+        }
+        .prose-styles pre {
+            background-color: #f8f8f8 !important;
+            border: 1px solid #ccc !important;
+            padding: 10px !important;
+            white-space: pre-wrap !important;
+            word-wrap: break-word !important;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+        }
+        .prose-styles pre code {
+            border: none !important;
+            background-color: transparent !important;
+        }
+
+        .prompt-content-for-print {
+            background-color: #ffffff !important;
+            border: 1px solid #ccc !important;
+            padding: 15px !important;
+            border-radius: 4px !important;
+        }
+        
         .font-bold {
             font-weight: bold !important;
         }
@@ -93,7 +207,9 @@
     "react/": "https://aistudiocdn.com/react@^19.1.1/",
     "react": "https://aistudiocdn.com/react@^19.1.1",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.21.0"
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.21.0",
+    "react-markdown": "https://esm.sh/react-markdown@9?deps=react@^19.1.1",
+    "remark-gfm": "https://esm.sh/remark-gfm@4"
   }
 }
 </script>
