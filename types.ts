@@ -18,8 +18,4 @@ export interface PromptHistoryItem {
     niche: string;
 }
 
-// FIX: Add and export the ApiKey interface, which is used in ApiKeyManager.tsx.
-export interface ApiKey {
-    name: string;
-    key: string;
-}
+// FIX: Removed the ApiKey interface. As per guidelines, the API key should be managed through environment variables, not through the UI.

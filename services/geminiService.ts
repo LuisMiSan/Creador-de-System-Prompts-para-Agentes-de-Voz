@@ -6,8 +6,9 @@ import { VoiceAgentPromptData } from '../types';
  * @param promptData - The user-provided data for the voice agent.
  * @returns A promise that resolves to a string containing the generated system prompt.
  */
+// FIX: The apiKey parameter has been removed to adhere to the guideline of exclusively using process.env.API_KEY.
 export const generatePerfectPrompt = async (promptData: VoiceAgentPromptData): Promise<string> => {
-    // API key is handled by the environment variable `process.env.API_KEY`
+    // FIX: Initialize GoogleGenAI with the API key from environment variables as per guidelines. The apiKey is assumed to be available.
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
     console.log("Generating prompt with Gemini API:", promptData);
@@ -124,7 +125,8 @@ ${filledSections}
         console.error("Error al llamar a la API de Gemini:", error);
         if (error instanceof Error) {
             // Provide a more generic message to the user
-            throw new Error(`Error al generar el prompt con IA. Por favor, inténtalo de nuevo más tarde.`);
+            // FIX: Updated the error message to reflect that the API key is managed via environment variables.
+            throw new Error(`Error al generar el prompt con IA. Revisa tu API Key o inténtalo de nuevo más tarde.`);
         }
         throw new Error("Ocurrió un error desconocido al generar el prompt con IA.");
     }

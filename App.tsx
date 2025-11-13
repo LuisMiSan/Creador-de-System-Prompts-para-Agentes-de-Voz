@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+// FIX: Removed ApiKey as it's no longer needed after removing the API key management UI.
 import { VoiceAgentPromptData, PromptHistoryItem } from './types';
 import { generatePerfectPrompt } from './services/geminiService';
 import InputField from './components/InputField';
@@ -6,6 +7,7 @@ import Spinner from './components/Spinner';
 import IconButton from './components/IconButton';
 import PromptExamples from './components/PromptExamples';
 import SavedPrompts from './components/SavedPrompts';
+// FIX: Removed ApiKeyManager as API key management via UI is against the guidelines.
 import { CopyIcon, CheckIcon, SparklesIcon, TrashIcon, CloseIcon, RefreshIcon, PlusIcon } from './components/Icons';
 import Logo from './components/Logo';
 
@@ -96,6 +98,8 @@ const App: React.FC = () => {
     const [autoSavedData, setAutoSavedData] = useState<VoiceAgentPromptData | null>(null);
     const promptDataRef = useRef(promptData);
     promptDataRef.current = promptData;
+
+    // FIX: Removed API Key Management State as per guidelines.
     
     // Auto-save logic
     useEffect(() => {
@@ -111,18 +115,17 @@ const App: React.FC = () => {
         return () => clearInterval(intervalId);
     }, []);
 
-    // Load history and auto-saved prompt on initial render
+    // Load history, auto-saved prompt, and API keys on initial render
     useEffect(() => {
         try {
             const savedHistory = localStorage.getItem('promptHistory');
             if (savedHistory) setHistory(JSON.parse(savedHistory));
-        } catch (e) { console.error("Failed to load history from localStorage", e); }
-        
-        try {
+
             const savedPrompt = localStorage.getItem('autoSavedPrompt');
             if (savedPrompt) setAutoSavedData(JSON.parse(savedPrompt));
-        } catch (e) { console.error("Failed to load auto-saved prompt from localStorage", e); }
-        
+            // FIX: Removed loading API keys from localStorage.
+
+        } catch (e) { console.error("Failed to load data from localStorage", e); }
     }, []);
 
     // Persist history to localStorage whenever it changes
@@ -132,6 +135,7 @@ const App: React.FC = () => {
         } catch (e) { console.error("Failed to save history to localStorage", e); }
     }, [history]);
     
+    // FIX: Removed useEffect for persisting API keys.
 
     // Speech Recognition Setup
     useEffect(() => {
@@ -235,6 +239,8 @@ const App: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
+        // FIX: Removed API key validation. The key is now sourced from environment variables.
+        
         const trimmedRole = promptData.agentRole.trim();
         const trimmedTask = promptData.task.trim();
         const trimmedNiche = niche.trim();
@@ -260,6 +266,7 @@ const App: React.FC = () => {
         setGeneratedPrompt('');
 
         try {
+            // FIX: Removed passing the API key, as it's now handled by the geminiService.
             const perfectPrompt = await generatePerfectPrompt(promptData);
             setGeneratedPrompt(perfectPrompt);
             const newHistoryItem: PromptHistoryItem = {
@@ -333,12 +340,17 @@ const App: React.FC = () => {
         localStorage.removeItem('autoSavedPrompt');
         setAutoSavedData(null);
     };
+
+    // --- FIX: Removed API Key Handlers ---
     
     return (
         <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center p-4 sm:p-6 lg:p-8 font-sans">
             <Toast message={toastMessage} show={!!toastMessage} />
+            {/* FIX: Removed ApiKeyManager component to comply with guidelines. */}
+
             <div className="w-full max-w-5xl mx-auto mb-20">
                 <header className="relative text-center mb-12">
+                     {/* FIX: Removed the settings button for API key management. */}
                     <div className="flex justify-center items-center gap-3 sm:gap-4">
                         <Logo />
                         <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">
@@ -439,6 +451,7 @@ const App: React.FC = () => {
                                 placeholder="Ej: Sé siempre amable. Usa frases cortas. Si no sabes algo, di 'No tengo esa información'."
                                 helpText="Reglas sobre cómo deben ser las respuestas del agente."
                                 isTextarea
+                                // FIX: Corrected onMicClick handler. It was incorrectly calling handleInputChange which caused a reference error because 'e' was not defined. It should call handleMicClick to manage the microphone state.
                                 onMicClick={() => handleMicClick('responseGuidelines')}
                                 isListening={listeningField === 'responseGuidelines'}
                                 micSupported={micSupported}
