@@ -1,13 +1,13 @@
 import React from 'react';
 import { VoiceAgentPromptData } from '../types';
-import { HeadsetIcon, ChartBarIcon, WrenchScrewdriverIcon, SparklesIcon } from './Icons';
+import { HeadsetIcon, ChartBarIcon, WrenchScrewdriverIcon, SparklesIcon, MarkdownIcon } from './Icons';
 
 interface PromptExamplesProps {
     onSelectExample: (data: VoiceAgentPromptData) => void;
 }
 
 interface Example {
-    category: 'Atención al Cliente' | 'Ventas y Cualificación' | 'Soporte Técnico';
+    category: 'Atención al Cliente' | 'Ventas y Cualificación' | 'Soporte Técnico' | 'Generación de Contenido' | 'Productividad y Automatización';
     title: string;
     description: string;
     icon: React.ReactNode;
@@ -62,6 +62,38 @@ const examples: Example[] = [
             stepByStep: '1. Saludo y solicitud del DNI del titular. 2. Preguntar cuál es el problema. 3. Iniciar diagnóstico: ¿Luces del router? 4. Guiar al cliente para reiniciar el router. 5. Realizar un test de velocidad. 6. Si no se soluciona, crear un ticket y escalar.',
             notes: 'Manejar la frustración del cliente con empatía. Documentar cada paso y resultado en el sistema interno.'
         }
+    },
+    {
+        category: 'Generación de Contenido',
+        title: 'Descripciones de Producto',
+        description: 'Crea descripciones de producto atractivas y optimizadas para SEO a partir de datos básicos del producto.',
+        icon: <SparklesIcon />,
+        data: {
+            agentRole: "Eres 'CopyCraft', un experto en copywriting para e-commerce. Tu especialidad es transformar listas de características en descripciones de producto que venden.",
+            task: 'Generar una descripción de producto atractiva, persuasiva y optimizada para SEO para el producto proporcionado en el contexto.',
+            personality: 'Creativo, directo y enfocado en los beneficios para el cliente. Usas un lenguaje vibrante y evocador.',
+            toneAndLanguage: "Tono entusiasta y convincente. Usa la segunda persona ('tú') para dirigirte directamente al comprador. Incluye emojis relevantes para darle un toque visual.",
+            context: "Producto: Zapatillas 'Sky-Walker'. Características: Malla transpirable, suela de gel reactiva, peso 250g, ideal para running urbano, colores disponibles: azul neón, negro carbón.",
+            responseGuidelines: "Estructura la descripción en: 1. Título llamativo. 2. Párrafo introductorio (2-3 frases) que capte la atención. 3. Lista de 3-5 beneficios clave (no características) con viñetas. 4. Párrafo de cierre con una llamada a la acción clara.",
+            stepByStep: "1. Analiza las características del producto. 2. Identifica el público objetivo (corredores urbanos). 3. Traduce cada característica en un beneficio directo para el usuario. 4. Redacta el texto siguiendo la estructura de las directrices. 5. Sugiere 3-5 palabras clave para SEO (ej: zapatillas running, calzado deportivo ligero, correr en ciudad).",
+            notes: "Evita superlativos genéricos como 'el mejor del mercado'. Enfócate en sensaciones y resultados."
+        }
+    },
+    {
+        category: 'Productividad y Automatización',
+        title: 'Resumen de Reuniones',
+        description: 'Transforma una transcripción de reunión en un resumen estructurado con puntos clave y acciones a seguir.',
+        icon: <MarkdownIcon />,
+        data: {
+            agentRole: "Eres 'SummarizeAI', un asistente de productividad ultra-eficiente. Tu habilidad es destilar información compleja en resúmenes claros y accionables.",
+            task: 'Analizar la transcripción de una reunión y generar un resumen conciso que incluya los puntos clave discutidos, las decisiones tomadas y los próximos pasos asignados a cada participante.',
+            personality: 'Analítico, preciso y estructurado. Vas directo al grano y valoras la claridad por encima de todo.',
+            toneAndLanguage: 'Tono formal y objetivo. Usa un lenguaje profesional y neutro. La salida debe estar perfectamente formateada en Markdown.',
+            context: "Transcripción de la reunión del proyecto 'Alpha' del 24/05/2024. Participantes: Laura (PM), Carlos (Diseño), Ana (Desarrollo). Tópicos: Revisión del prototipo, feedback de diseño, bloqueo en la API de pagos.",
+            responseGuidelines: "La salida debe tener 3 secciones OBLIGATORIAS: 'Resumen Ejecutivo', 'Decisiones Clave' y 'Acciones Pendientes'. En 'Acciones Pendientes', formatea cada item como: `- [ ] Tarea - **@Responsable** - Fecha Límite: YYYY-MM-DD`.",
+            stepByStep: "1. Lee la transcripción completa para entender el contexto. 2. Identifica los temas principales y las conclusiones de cada uno. 3. Extrae las decisiones finales que se acordaron. 4. Lista todas las tareas asignadas, identificando claramente el responsable y la fecha límite si se menciona. 5. Compila la información en las 3 secciones requeridas.",
+            notes: "Si alguna parte de la transcripción es ambigua, no inventes información. Señálalo como '[Punto no claro]' en el resumen."
+        }
     }
 ];
 
@@ -72,7 +104,7 @@ const PromptExamples: React.FC<PromptExamplesProps> = ({ onSelectExample }) => {
             <h2 className="text-2xl font-bold text-center text-gray-300 mb-2">¿No sabes por dónde empezar?</h2>
             <p className="text-center text-gray-400 mb-8">Usa una de nuestras plantillas probadas para arrancar.</p>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {examples.map((example) => (
                     <div 
                         key={example.title}

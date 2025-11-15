@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PromptHistoryItem } from '../types';
-import { HistoryIcon, TrashIcon, DownloadIcon, PdfIcon, ChevronDownIcon, ChevronUpIcon } from './Icons';
+import { HistoryIcon, TrashIcon, DownloadIcon, PdfIcon, ChevronDownIcon, ChevronUpIcon, SearchIcon } from './Icons';
 
 interface SavedPromptsProps {
     history: PromptHistoryItem[];
@@ -10,6 +10,7 @@ interface SavedPromptsProps {
 
 const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete }) => {
     const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState<string>('');
 
     const handleToggleExpand = (id: string) => {
         setExpandedId(currentId => (currentId === id ? null : id));
@@ -17,6 +18,18 @@ const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete
     
     // Sort prompts by timestamp, newest first
     const sortedHistory = [...history].sort((a, b) => b.timestamp - a.timestamp);
+
+    // Filter prompts based on search query
+    const filteredHistory = sortedHistory.filter(item => {
+        const query = searchQuery.toLowerCase();
+        if (!query) return true;
+        
+        const nicheMatch = item.niche.toLowerCase().includes(query);
+        const roleMatch = item.promptData.agentRole.toLowerCase().includes(query);
+        const promptMatch = item.generatedPrompt.toLowerCase().includes(query);
+
+        return nicheMatch || roleMatch || promptMatch;
+    });
 
     const handleExportMarkdown = (items: PromptHistoryItem[]) => {
         let markdownContent = "# Mi Base de Datos de Prompts\n\n";
@@ -39,7 +52,7 @@ const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'voxwizard-prompts.md';
+        a.download = 'voxwizard-prompts-filtrados.md';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -74,8 +87,8 @@ const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete
 
     return (
         <section id="history-print-area" className="mt-12">
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-8 no-print">
-                <div className="text-center sm:text-left">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-8 no-print">
+                <div className="text-center md:text-left flex-shrink-0">
                     <h2 className="text-2xl font-bold text-gray-300 flex items-center justify-center sm:justify-start gap-3">
                         <HistoryIcon />
                         Mi Base de Datos de Prompts
@@ -83,21 +96,35 @@ const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete
                     <p className="text-gray-400">Aquí se guardan todos los prompts que creas. Haz clic en una fila para cargarla.</p>
                 </div>
                 {history.length > 0 && (
-                    <div className="flex items-center gap-3 mt-4 sm:mt-0">
-                        <button
-                            onClick={() => handleExportMarkdown(sortedHistory)}
-                            className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/70 text-gray-300 font-semibold rounded-lg transition-colors"
-                        >
-                            <DownloadIcon />
-                            Exportar Markdown
-                        </button>
-                        <button
-                            onClick={handlePrint}
-                            className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/70 text-gray-300 font-semibold rounded-lg transition-colors"
-                        >
-                            <PdfIcon />
-                            Imprimir / PDF
-                        </button>
+                     <div className="w-full md:w-auto flex flex-col sm:flex-row items-center gap-3">
+                        <div className="relative w-full sm:w-auto">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <SearchIcon />
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="Buscar por nicho o palabra clave..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2 text-sm bg-gray-700/50 border border-gray-600 rounded-lg text-gray-200 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500 transition-colors"
+                            />
+                        </div>
+                        <div className="flex items-center gap-3 w-full sm:w-auto">
+                            <button
+                                onClick={() => handleExportMarkdown(filteredHistory)}
+                                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/70 text-gray-300 font-semibold rounded-lg transition-colors"
+                            >
+                                <DownloadIcon />
+                                Exportar
+                            </button>
+                            <button
+                                onClick={handlePrint}
+                                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/70 text-gray-300 font-semibold rounded-lg transition-colors"
+                            >
+                                <PdfIcon />
+                                PDF
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>
@@ -111,6 +138,12 @@ const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete
                     <HistoryIcon className="w-12 h-12 mx-auto text-gray-600 mb-4" />
                     <h3 className="text-lg font-semibold text-gray-400">Tu base de datos está vacía</h3>
                     <p className="text-gray-500">Rellena el formulario para empezar a crear y guardar prompts.</p>
+                </div>
+            ) : filteredHistory.length === 0 ? (
+                 <div className="text-center py-12 bg-gray-800/30 border border-dashed border-gray-700 rounded-xl no-print">
+                    <SearchIcon />
+                    <h3 className="text-lg font-semibold text-gray-400 mt-4">No se encontraron prompts</h3>
+                    <p className="text-gray-500">Prueba con otra palabra clave o limpia la búsqueda.</p>
                 </div>
             ) : (
                 <div className="bg-gray-800/60 border border-gray-700 rounded-xl overflow-hidden shadow-lg">
@@ -133,7 +166,7 @@ const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete
                                 </tr>
                             </thead>
                             <tbody>
-                                {sortedHistory.map(item => (
+                                {filteredHistory.map(item => (
                                     <React.Fragment key={item.id}>
                                         <tr 
                                             className="border-b border-gray-700 hover:bg-gray-800/70 cursor-pointer transition-colors duration-200"
