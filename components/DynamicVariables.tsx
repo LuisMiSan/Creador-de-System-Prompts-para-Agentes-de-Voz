@@ -1,15 +1,18 @@
 import React from 'react';
 import { DynamicVariable } from '../types';
-import { PlusIcon, TrashIcon } from './Icons';
+import { PlusIcon, TrashIcon, MicrophoneIcon } from './Icons';
 
 interface DynamicVariablesProps {
     variables: DynamicVariable[];
     onAdd: () => void;
     onUpdate: (id: string, field: 'name' | 'value', value: string) => void;
     onDelete: (id: string) => void;
+    onMicClick: (fieldIdentifier: string) => void;
+    listeningField: string | null;
+    micSupported: boolean;
 }
 
-const DynamicVariables: React.FC<DynamicVariablesProps> = ({ variables, onAdd, onUpdate, onDelete }) => {
+const DynamicVariables: React.FC<DynamicVariablesProps> = ({ variables, onAdd, onUpdate, onDelete, onMicClick, listeningField, micSupported }) => {
     
     const handleNameChange = (id: string, name: string) => {
         // Allow only letters, numbers, and underscores
@@ -29,25 +32,45 @@ const DynamicVariables: React.FC<DynamicVariablesProps> = ({ variables, onAdd, o
             <div className="space-y-3 mt-2">
                 {variables.map((variable, index) => (
                     <div key={variable.id} className="flex items-center gap-2 p-3 bg-gray-900/50 rounded-lg border border-gray-700/50">
-                        <div className="flex-1">
+                        <div className="flex-1 relative">
                             <input
                                 type="text"
                                 value={variable.name}
                                 onChange={(e) => handleNameChange(variable.id, e.target.value)}
                                 placeholder="nombre_variable"
-                                className="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm text-gray-200 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500"
+                                className="w-full bg-gray-700 border border-gray-600 rounded-md p-2 pr-10 text-sm text-gray-200 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500"
                                 aria-label={`Nombre de la variable ${index + 1}`}
                             />
+                             {micSupported && (
+                                <button
+                                    type="button"
+                                    onClick={() => onMicClick(`variable-name-${variable.id}`)}
+                                    className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full transition-colors ${listeningField === `variable-name-${variable.id}` ? 'text-blue-400 bg-blue-500/20' : 'text-gray-400 hover:text-gray-200'}`}
+                                    aria-label={`Dictar nombre de variable ${index + 1}`}
+                                >
+                                    <MicrophoneIcon />
+                                </button>
+                            )}
                         </div>
-                         <div className="flex-1">
+                         <div className="flex-1 relative">
                             <input
                                 type="text"
                                 value={variable.value}
                                 onChange={(e) => onUpdate(variable.id, 'value', e.target.value)}
                                 placeholder="Valor de Ejemplo"
-                                className="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm text-gray-200 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500"
+                                className="w-full bg-gray-700 border border-gray-600 rounded-md p-2 pr-10 text-sm text-gray-200 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500"
                                 aria-label={`Valor de la variable ${index + 1}`}
                             />
+                            {micSupported && (
+                                <button
+                                    type="button"
+                                    onClick={() => onMicClick(`variable-value-${variable.id}`)}
+                                    className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full transition-colors ${listeningField === `variable-value-${variable.id}` ? 'text-blue-400 bg-blue-500/20' : 'text-gray-400 hover:text-gray-200'}`}
+                                    aria-label={`Dictar valor de variable ${index + 1}`}
+                                >
+                                    <MicrophoneIcon />
+                                </button>
+                            )}
                         </div>
                         <button
                             type="button"

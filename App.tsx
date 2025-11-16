@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 // FIX: Removed ApiKey as it's no longer needed after removing the API key management UI.
-import { VoiceAgentPromptData, PromptHistoryItem, DynamicVariable } from './types';
+import { VoiceAgentPromptData, PromptHistoryItem, DynamicVariable, ShareablePromptData } from './types';
 import { generatePerfectPrompt } from './services/geminiService';
 import InputField from './components/InputField';
 import Spinner from './components/Spinner';
@@ -8,10 +8,11 @@ import IconButton from './components/IconButton';
 import PromptExamples from './components/PromptExamples';
 import SavedPrompts from './components/SavedPrompts';
 // FIX: Removed ApiKeyManager as API key management via UI is against the guidelines.
-import { CopyIcon, CheckIcon, SparklesIcon, TrashIcon, CloseIcon, RefreshIcon, PlusIcon, PdfIcon } from './components/Icons';
+import { CopyIcon, CheckIcon, SparklesIcon, TrashIcon, CloseIcon, RefreshIcon, PlusIcon, PdfIcon, ShareIcon } from './components/Icons';
 import Logo from './components/Logo';
 import DynamicVariables from './components/DynamicVariables';
 import MarkdownEditor from './components/MarkdownEditor';
+import ShareModal from './components/ShareModal';
 
 // Extend the window object with SpeechRecognition
 interface CustomWindow extends Window {
@@ -94,7 +95,7 @@ const App: React.FC = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [isCopied, setIsCopied] = useState<boolean>(false);
-    const [listeningField, setListeningField] = useState<keyof VoiceAgentPromptData | null>(null);
+    const [listeningField, setListeningField] = useState<string | null>(null);
     const [micSupported, setMicSupported] = useState<boolean>(false);
     const recognitionRef = useRef<any | null>(null);
     const formRef = useRef<HTMLDivElement>(null);
@@ -103,6 +104,9 @@ const App: React.FC = () => {
     const [toastMessage, setToastMessage] = useState('');
 
     const [autoSavedData, setAutoSavedData] = useState<AutoSavedDraft | null>(null);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+    const [shareableLink, setShareableLink] = useState('');
+    
     const promptDataRef = useRef(promptData);
     promptDataRef.current = promptData;
     const variablesRef = useRef(variables);
@@ -129,6 +133,26 @@ const App: React.FC = () => {
     // Load history, auto-saved prompt, and API keys on initial render
     useEffect(() => {
         try {
+             // Load shared prompt from URL first
+            const hash = window.location.hash;
+            if (hash.startsWith('#prompt=')) {
+                const encodedData = hash.substring('#prompt='.length);
+                const decodedData = atob(encodedData);
+                const sharedData: ShareablePromptData = JSON.parse(decodedData);
+                
+                setPromptData(sharedData.promptData);
+                setVariables(sharedData.variables || []);
+                setNiche(sharedData.niche);
+                setGeneratedPrompt(sharedData.generatedPrompt);
+
+                setToastMessage('¡Prompt compartido cargado con éxito!');
+                setTimeout(() => setToastMessage(''), 3000);
+
+                // Clean the URL
+                window.history.replaceState(null, '', ' ');
+                return; // Don't load local data if we loaded from a share link
+            }
+
             const savedHistory = localStorage.getItem('promptHistory');
             if (savedHistory) setHistory(JSON.parse(savedHistory));
 
@@ -136,7 +160,7 @@ const App: React.FC = () => {
             if (savedPrompt) setAutoSavedData(JSON.parse(savedPrompt));
             // FIX: Removed loading API keys from localStorage.
 
-        } catch (e) { console.error("Failed to load data from localStorage", e); }
+        } catch (e) { console.error("Failed to load data from localStorage or URL", e); }
     }, []);
 
     // Persist history to localStorage whenever it changes
@@ -166,10 +190,29 @@ const App: React.FC = () => {
                     }
                 }
                 if (listeningField && finalTranscript) {
-                    setPromptData(prev => ({
-                        ...prev,
-                        [listeningField]: (prev[listeningField] ? prev[listeningField] + ' ' : '') + finalTranscript
-                    }));
+                    if (listeningField in promptDataRef.current) {
+                        setPromptData(prev => ({
+                            ...prev,
+                            [listeningField]: (prev[listeningField as keyof VoiceAgentPromptData] ? prev[listeningField as keyof VoiceAgentPromptData] + ' ' : '') + finalTranscript
+                        }));
+                    } else if (listeningField === 'niche') {
+                        setNiche(prev => (prev ? prev + ' ' : '') + finalTranscript);
+                    } else if (listeningField.startsWith('variable-')) {
+                        const [, field, id] = listeningField.split('-');
+                        setVariables(prevVars => prevVars.map(v => {
+                            if (v.id === id) {
+                                if (field === 'name') {
+                                    const newValue = (v.name + finalTranscript).replace(/[^a-zA-Z0-9_]/g, '');
+                                    return { ...v, name: newValue };
+                                }
+                                if (field === 'value') {
+                                    const newValue = (v.value ? v.value + ' ' : '') + finalTranscript;
+                                    return { ...v, value: newValue };
+                                }
+                            }
+                            return v;
+                        }));
+                    }
                 }
             };
             recognition.onerror = (event: any) => { console.error('Speech recognition error', event.error); setListeningField(null); };
@@ -185,7 +228,7 @@ const App: React.FC = () => {
         setPromptData(prev => ({ ...prev, [field]: value }));
     }, []);
 
-    const handleMicClick = (field: keyof VoiceAgentPromptData) => {
+    const handleMicClick = (field: string) => {
         if (!recognitionRef.current) return;
         if (listeningField === field) {
             recognitionRef.current.stop();
@@ -344,6 +387,28 @@ const App: React.FC = () => {
         window.print();
     };
 
+    const handleOpenShareModal = () => {
+        if (!generatedPrompt) return;
+
+        try {
+            const shareData: ShareablePromptData = {
+                promptData,
+                generatedPrompt,
+                niche,
+                variables,
+            };
+            const jsonString = JSON.stringify(shareData);
+            const encodedData = btoa(jsonString);
+            const url = `${window.location.href.split('#')[0]}#prompt=${encodedData}`;
+
+            setShareableLink(url);
+            setIsShareModalOpen(true);
+        } catch (error) {
+            console.error("Error creating share link:", error);
+            setError("No se pudo crear el enlace para compartir.");
+        }
+    };
+
     const handleSelectHistoryItem = (item: PromptHistoryItem) => {
         setPromptData(item.promptData);
         setGeneratedPrompt(item.generatedPrompt);
@@ -406,6 +471,7 @@ const App: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center p-4 sm:p-6 lg:p-8 font-sans">
             <Toast message={toastMessage} show={!!toastMessage} />
+            <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} link={shareableLink} />
             {/* FIX: Removed ApiKeyManager component to comply with guidelines. */}
 
             <div className="w-full max-w-5xl mx-auto mb-20">
@@ -548,6 +614,9 @@ const App: React.FC = () => {
                                     placeholder="Ej: Peluquería, Inmobiliaria, Restaurante..."
                                     helpText="Categoriza este prompt para encontrarlo fácilmente. (Obligatorio)"
                                     required
+                                    onMicClick={() => handleMicClick('niche')}
+                                    isListening={listeningField === 'niche'}
+                                    micSupported={micSupported}
                                 />
                             </div>
 
@@ -557,6 +626,9 @@ const App: React.FC = () => {
                                     onAdd={handleAddVariable}
                                     onUpdate={handleUpdateVariable}
                                     onDelete={handleDeleteVariable}
+                                    onMicClick={handleMicClick}
+                                    listeningField={listeningField}
+                                    micSupported={micSupported}
                                 />
                             </div>
 
@@ -600,6 +672,12 @@ const App: React.FC = () => {
                             ) : (
                                 <>
                                     <div className="absolute top-2 right-2 flex gap-2 no-print">
+                                        <IconButton
+                                            onClick={handleOpenShareModal}
+                                            text="Compartir"
+                                            icon={<ShareIcon />}
+                                            className="bg-gray-700/50 hover:bg-gray-600/50 text-gray-300"
+                                        />
                                         <IconButton
                                             onClick={handleCopy}
                                             text={isCopied ? 'Copiado' : 'Copiar'}

@@ -25,4 +25,11 @@ export interface PromptHistoryItem {
     variables?: DynamicVariable[];
 }
 
+export interface ShareablePromptData {
+    promptData: VoiceAgentPromptData;
+    generatedPrompt: string;
+    niche: string;
+    variables: DynamicVariable[];
+}
+
 // FIX: Removed the ApiKey interface. As per guidelines, the API key should be managed through environment variables, not through the UI.
