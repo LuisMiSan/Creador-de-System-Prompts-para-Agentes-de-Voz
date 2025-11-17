@@ -1,6 +1,7 @@
+
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 // FIX: Removed ApiKey as it's no longer needed after removing the API key management UI.
-import { VoiceAgentPromptData, PromptHistoryItem, DynamicVariable, ShareablePromptData } from './types';
+import { VoiceAgentPromptData, PromptHistoryItem, DynamicVariable, ShareablePromptData, AutoSavedDraft } from './types';
 import { generatePerfectPrompt } from './services/geminiService';
 import InputField from './components/InputField';
 import Spinner from './components/Spinner';
@@ -72,11 +73,6 @@ const AutoSaveNotification: React.FC<AutoSaveNotificationProps> = ({ onRestore, 
     );
 };
 
-interface AutoSavedDraft {
-    promptData: VoiceAgentPromptData;
-    variables: DynamicVariable[];
-}
-
 // --- Main App Component ---
 const App: React.FC = () => {
     const [promptData, setPromptData] = useState<VoiceAgentPromptData>({
@@ -125,7 +121,7 @@ const App: React.FC = () => {
             if (!isDataEmpty || !areVariablesEmpty) {
                 localStorage.setItem('autoSavedPrompt', JSON.stringify({ promptData: currentData, variables: currentVariables }));
             }
-        }, 30000); // Save every 30 seconds
+        }, 10000); // Save every 10 seconds for better data safety
 
         return () => clearInterval(intervalId);
     }, []);

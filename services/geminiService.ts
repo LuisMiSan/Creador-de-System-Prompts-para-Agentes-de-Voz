@@ -123,11 +123,28 @@ ${filledSections}
         return text;
     } catch (error) {
         console.error("Error al llamar a la API de Gemini:", error);
+
+        // --- Validación de API Key (Preparado para Producción) ---
+        // Cambia a 'true' para activar la validación estricta de la API Key en producción.
+        const IS_IN_PRODUCTION = false;
+
+        if (IS_IN_PRODUCTION && error instanceof Error) {
+            const errorMessage = error.message.toLowerCase();
+            // Detecta errores comunes relacionados con la API Key para dar un feedback más claro.
+            if (errorMessage.includes('api key not valid') || 
+                errorMessage.includes('permission denied') || 
+                errorMessage.includes('api_key_invalid') ||
+                errorMessage.includes('api key is invalid')) {
+                throw new Error('Error de Autenticación: La API Key configurada no es válida, ha caducado o no tiene los permisos necesarios. Por favor, contacta al administrador del sistema.');
+            }
+        }
+        
+        // --- Mensaje de Error Genérico (Fase Beta o error no relacionado con la Key) ---
         if (error instanceof Error) {
-            // Provide a more generic message to the user
-            // FIX: Updated error message to not ask the user to check their API key, as it's handled by environment variables.
+            // Mensaje por defecto mientras la validación estricta no está activa.
             throw new Error(`Ocurrió un error al generar el prompt con IA. Inténtalo de nuevo más tarde.`);
         }
+        
         throw new Error("Ocurrió un error desconocido al generar el prompt con IA.");
     }
 };

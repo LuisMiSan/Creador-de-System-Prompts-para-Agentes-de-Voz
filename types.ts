@@ -1,3 +1,4 @@
+
 export interface VoiceAgentPromptData {
     // The order of these fields matches the form input order
     agentRole: string;
@@ -29,6 +30,11 @@ export interface ShareablePromptData {
     promptData: VoiceAgentPromptData;
     generatedPrompt: string;
     niche: string;
+    variables: DynamicVariable[];
+}
+
+export interface AutoSavedDraft {
+    promptData: VoiceAgentPromptData;
     variables: DynamicVariable[];
 }
 
