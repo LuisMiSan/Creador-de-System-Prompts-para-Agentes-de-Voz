@@ -84,18 +84,18 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({
                                 value={newKeyName}
                                 onChange={(e) => setNewKeyName(e.target.value)}
                                 placeholder="Nombre (Ej: Mi Proyecto)"
-                                className="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-gray-200 focus:ring-1 focus:ring-blue-500 placeholder-gray-500"
+                                className="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-gray-200 focus:ring-1 focus:ring-orange-500 placeholder-gray-500"
                             />
                             <input
                                 type="password"
                                 value={newKeyValue}
                                 onChange={(e) => setNewKeyValue(e.target.value)}
                                 placeholder="Pega tu API Key aquí"
-                                className="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-gray-200 focus:ring-1 focus:ring-blue-500 placeholder-gray-500"
+                                className="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-gray-200 focus:ring-1 focus:ring-orange-500 placeholder-gray-500"
                             />
                         </div>
                         {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
-                        <button type="submit" className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors">
+                        <button type="submit" className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-lg transition-colors">
                             <PlusIcon />
                             Añadir Clave
                         </button>
@@ -120,7 +120,7 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({
                                             ) : (
                                                 <button 
                                                     onClick={() => handleSelectAndClose(key.name)}
-                                                    className="text-xs px-2 py-1 bg-gray-600 hover:bg-blue-600 text-gray-300 hover:text-white font-semibold rounded-md transition-colors"
+                                                    className="text-xs px-2 py-1 bg-gray-600 hover:bg-orange-600 text-gray-300 hover:text-white font-semibold rounded-md transition-colors"
                                                 >
                                                     Seleccionar
                                                 </button>

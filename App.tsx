@@ -475,7 +475,7 @@ const App: React.FC = () => {
                      {/* FIX: Removed the settings button for API key management. */}
                     <div className="flex justify-center items-center gap-3 sm:gap-4">
                         <Logo />
-                        <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">
+                        <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-blue-500">
                             VoxWizard IA
                         </h1>
                     </div>
@@ -634,7 +634,7 @@ const App: React.FC = () => {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white font-bold rounded-lg shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
+                                className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-lg shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
                             >
                                 {isLoading ? <Spinner /> : <SparklesIcon />}
                                 {isLoading ? 'Generando...' : 'Crear y Guardar Prompt'}

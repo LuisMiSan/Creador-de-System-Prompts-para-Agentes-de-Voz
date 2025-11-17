@@ -13,7 +13,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange }) => {
     const tabClasses = (tabName: 'preview' | 'edit') => 
         `px-4 py-2 text-sm font-medium rounded-md transition-colors ${
             activeTab === tabName 
-            ? 'bg-blue-600 text-white' 
+            ? 'bg-orange-600 text-white' 
             : 'text-gray-400 hover:bg-gray-700 hover:text-gray-200'
         }`;
 
@@ -34,7 +34,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange }) => {
                 <textarea
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
-                    className="w-full h-96 p-4 rounded-md bg-gray-900 border border-gray-600 text-gray-200 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+                    className="w-full h-96 p-4 rounded-md bg-gray-900 border border-gray-600 text-gray-200 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-y"
                     aria-label="Editor de Markdown"
                 />
             </div>

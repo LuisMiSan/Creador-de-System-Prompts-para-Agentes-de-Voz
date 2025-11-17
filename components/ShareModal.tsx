@@ -55,7 +55,7 @@ const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, link }) => {
                         />
                         <button
                             onClick={handleCopy}
-                            className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 text-white font-semibold rounded-lg transition-colors text-sm ${isCopied ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                            className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 text-white font-semibold rounded-lg transition-colors text-sm ${isCopied ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700'}`}
                         >
                             {isCopied ? <CheckIcon /> : <CopyIcon />}
                             {isCopied ? 'Copiado' : 'Copiar'}

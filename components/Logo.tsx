@@ -10,8 +10,8 @@ const Logo: React.FC<{ className?: string }> = ({ className = "h-12 w-12 sm:h-14
         >
             <defs>
                 <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#c084fc" />
-                    <stop offset="100%" stopColor="#60a5fa" />
+                    <stop offset="0%" stopColor="#fb923c" />
+                    <stop offset="100%" stopColor="#3b82f6" />
                 </linearGradient>
             </defs>
             {/* Wizard Hat */}

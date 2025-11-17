@@ -106,7 +106,7 @@ const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete
                                 placeholder="Buscar por nicho o palabra clave..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 text-sm bg-gray-700/50 border border-gray-600 rounded-lg text-gray-200 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500 transition-colors"
+                                className="w-full pl-10 pr-4 py-2 text-sm bg-gray-700/50 border border-gray-600 rounded-lg text-gray-200 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 placeholder-gray-500 transition-colors"
                             />
                         </div>
                         <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -173,7 +173,7 @@ const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete
                                             onClick={() => onSelect(item)}
                                         >
                                             <td className="px-6 py-4 align-top">
-                                                <span className="bg-blue-900/70 text-blue-300 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap capitalize">
+                                                <span className="bg-orange-900/70 text-orange-300 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap capitalize">
                                                     {item.niche || 'Sin Nicho'}
                                                 </span>
                                             </td>
@@ -195,7 +195,7 @@ const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete
                                                             e.stopPropagation();
                                                             handleToggleExpand(item.id);
                                                         }}
-                                                        className="p-2 text-gray-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-full transition-colors"
+                                                        className="p-2 text-gray-500 hover:text-orange-400 hover:bg-orange-500/10 rounded-full transition-colors"
                                                         aria-label="Ver detalles"
                                                     >
                                                         {expandedId === item.id ? <ChevronUpIcon /> : <ChevronDownIcon />}
@@ -235,7 +235,7 @@ const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete
                                                                         <ul className="space-y-2">
                                                                             {item.variables.map(v => (
                                                                                 <li key={v.id} className="flex items-center gap-2 p-2 bg-gray-900 rounded-md">
-                                                                                    <span className="font-mono text-xs bg-gray-700 text-blue-300 px-2 py-1 rounded">{`{{${v.name}}}`}</span>
+                                                                                    <span className="font-mono text-xs bg-gray-700 text-orange-300 px-2 py-1 rounded">{`{{${v.name}}}`}</span>
                                                                                     <span className="text-gray-400">→</span>
                                                                                     <span className="text-gray-200">{v.value}</span>
                                                                                 </li>

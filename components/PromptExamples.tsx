@@ -108,10 +108,10 @@ const PromptExamples: React.FC<PromptExamplesProps> = ({ onSelectExample }) => {
                 {examples.map((example) => (
                     <div 
                         key={example.title}
-                        className="bg-gray-800/40 border border-gray-700 rounded-xl p-6 flex flex-col items-start hover:border-blue-500/50 hover:bg-gray-800/80 transition-all duration-300 group"
+                        className="bg-gray-800/40 border border-gray-700 rounded-xl p-6 flex flex-col items-start hover:border-orange-500/50 hover:bg-gray-800/80 transition-all duration-300 group"
                     >
                         <div className="flex items-center gap-4 mb-3">
-                             <div className="bg-gray-700/50 p-2 rounded-lg text-blue-400">
+                             <div className="bg-gray-700/50 p-2 rounded-lg text-orange-400">
                                 {example.icon}
                              </div>
                              <h3 className="text-lg font-bold text-gray-100">{example.title}</h3>
@@ -121,7 +121,7 @@ const PromptExamples: React.FC<PromptExamplesProps> = ({ onSelectExample }) => {
                         
                         <button 
                             onClick={() => onSelectExample(example.data)}
-                            className="w-full flex items-center justify-center gap-2 mt-auto px-4 py-2 bg-gray-700/50 hover:bg-blue-600/80 text-gray-300 hover:text-white font-semibold rounded-lg transition-colors text-sm"
+                            className="w-full flex items-center justify-center gap-2 mt-auto px-4 py-2 bg-gray-700/50 hover:bg-orange-600/80 text-gray-300 hover:text-white font-semibold rounded-lg transition-colors text-sm"
                         >
                             <SparklesIcon/>
                             Usar esta plantilla

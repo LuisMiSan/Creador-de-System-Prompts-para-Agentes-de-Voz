@@ -32,7 +32,7 @@ const InputField: React.FC<InputFieldProps> = ({
 
     const commonInputClasses = `
         block w-full rounded-lg border appearance-none focus:outline-none focus:ring-0 peer transition-colors duration-200 
-        bg-gray-700/50 border-gray-600 text-gray-200 focus:border-blue-500 group-hover:border-gray-500
+        bg-gray-700/50 border-gray-600 text-gray-200 focus:border-orange-500 group-hover:border-gray-500
         ${micSupported ? "pr-10" : ""}
     `;
 
@@ -67,7 +67,7 @@ const InputField: React.FC<InputFieldProps> = ({
                                peer-placeholder-shown:translate-y-0
                                peer-focus:scale-75
                                peer-focus:-translate-y-3
-                               peer-focus:text-blue-400
+                               peer-focus:text-orange-400
                                pointer-events-none`}
                 >
                     {label} {required && <span className="text-red-400">*</span>}
@@ -77,7 +77,7 @@ const InputField: React.FC<InputFieldProps> = ({
                     <button
                         type="button"
                         onClick={onMicClick}
-                        className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full transition-colors ${isListening ? 'text-blue-400 bg-blue-500/20' : 'text-gray-400 hover:text-gray-200'}`}
+                        className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full transition-colors ${isListening ? 'text-orange-400 bg-orange-500/20' : 'text-gray-400 hover:text-gray-200'}`}
                         aria-label="Activar dictado por voz"
                     >
                         <MicrophoneIcon />
