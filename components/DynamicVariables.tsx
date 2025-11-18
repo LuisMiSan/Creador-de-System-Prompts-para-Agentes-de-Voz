@@ -30,7 +30,7 @@ const DynamicVariables: React.FC<DynamicVariablesProps> = ({ variables, onAdd, o
     
     const handleNameChange = (id: string, name: string) => {
         // Allow only letters, numbers, and underscores
-        const sanitizedName = name.replace(/[^a-zA-Z0- ৯০_]/g, '');
+        const sanitizedName = name.replace(/[^a-zA-Z0-9_]/g, '');
         onUpdate(id, 'name', sanitizedName);
     }
 
