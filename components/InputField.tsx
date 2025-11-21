@@ -32,7 +32,8 @@ const InputField: React.FC<InputFieldProps> = ({
 
     const commonInputClasses = `
         block w-full rounded-lg border appearance-none focus:outline-none focus:ring-0 peer transition-colors duration-200 
-        bg-gray-700/50 border-gray-600 text-gray-200 focus:border-orange-500 group-hover:border-gray-500
+        bg-[#0B0F19] border-gray-700 text-gray-200 focus:border-cyan-400 group-hover:border-gray-600
+        shadow-inner shadow-black/50
         ${micSupported ? "pr-10" : ""}
     `;
 
@@ -47,7 +48,7 @@ const InputField: React.FC<InputFieldProps> = ({
                         placeholder=" " // A space is needed for the :placeholder-shown selector to work
                         required={required}
                         rows={4}
-                        className={`${commonInputClasses} px-3 pt-5 pb-2 resize-none`}
+                        className={`${commonInputClasses} px-3 pt-6 pb-2 resize-none`}
                     />
                 ) : (
                     <input
@@ -62,13 +63,14 @@ const InputField: React.FC<InputFieldProps> = ({
                 )}
                 <label
                     htmlFor={inputId}
-                    className={`absolute text-gray-400 duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-3
+                    className={`absolute text-cyan-500/70 duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-3
                                peer-placeholder-shown:scale-100
                                peer-placeholder-shown:translate-y-0
+                               peer-placeholder-shown:text-gray-500
                                peer-focus:scale-75
                                peer-focus:-translate-y-3
-                               peer-focus:text-orange-400
-                               pointer-events-none`}
+                               peer-focus:text-cyan-400
+                               pointer-events-none font-medium tracking-wide`}
                 >
                     {label} {required && <span className="text-red-400">*</span>}
                 </label>
@@ -77,14 +79,14 @@ const InputField: React.FC<InputFieldProps> = ({
                     <button
                         type="button"
                         onClick={onMicClick}
-                        className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full transition-colors ${isListening ? 'text-orange-400 bg-orange-500/20' : 'text-gray-400 hover:text-gray-200'}`}
+                        className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full transition-colors ${isListening ? 'text-cyan-400 bg-cyan-500/20 animate-pulse' : 'text-gray-500 hover:text-gray-300'}`}
                         aria-label="Activar dictado por voz"
                     >
                         <MicrophoneIcon />
                     </button>
                 )}
             </div>
-            <p className="text-xs text-gray-400">{helpText}</p>
+            <p className="text-xs text-gray-500 ml-1">{helpText}</p>
         </div>
     );
 };

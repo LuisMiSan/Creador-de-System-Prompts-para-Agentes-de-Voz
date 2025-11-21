@@ -1,6 +1,5 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-// FIX: Removed ApiKey as it's no longer needed after removing the API key management UI.
 import { VoiceAgentPromptData, PromptHistoryItem, DynamicVariable, ShareablePromptData, AutoSavedDraft } from './types';
 import { generatePerfectPrompt } from './services/geminiService';
 import InputField from './components/InputField';
@@ -8,7 +7,6 @@ import Spinner from './components/Spinner';
 import IconButton from './components/IconButton';
 import PromptExamples from './components/PromptExamples';
 import SavedPrompts from './components/SavedPrompts';
-// FIX: Removed ApiKeyManager as API key management via UI is against the guidelines.
 import { CopyIcon, CheckIcon, SparklesIcon, TrashIcon, CloseIcon, RefreshIcon, PlusIcon, PdfIcon, ShareIcon } from './components/Icons';
 import Logo from './components/Logo';
 import DynamicVariables from './components/DynamicVariables';
@@ -31,7 +29,7 @@ interface ToastProps {
 const Toast: React.FC<ToastProps> = ({ message, show }) => {
     return (
         <div 
-            className={`fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-lg shadow-2xl bg-green-600/80 backdrop-blur-sm border border-green-500 text-white transition-all duration-300 ease-in-out
+            className={`fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-lg shadow-2xl bg-emerald-500/10 backdrop-blur-md border border-emerald-500/50 text-emerald-400 transition-all duration-300 ease-in-out
             ${show ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10 pointer-events-none'}`}
         >
             <CheckIcon className="h-5 w-5" />
@@ -49,21 +47,21 @@ interface AutoSaveNotificationProps {
 
 const AutoSaveNotification: React.FC<AutoSaveNotificationProps> = ({ onRestore, onDismiss }) => {
     return (
-        <div className="bg-blue-900/50 border border-blue-700 p-4 rounded-lg mb-6 text-sm flex flex-col sm:flex-row items-center justify-between shadow-lg gap-4">
+        <div className="bg-blue-900/30 border border-blue-500/30 p-4 rounded-xl mb-6 text-sm flex flex-col sm:flex-row items-center justify-between shadow-lg gap-4 backdrop-blur-sm">
             <p className="text-blue-200 text-center sm:text-left">
-                <span className="font-bold">Hemos encontrado un borrador.</span> ¿Quieres restaurar el contenido que no guardaste?
+                <span className="font-bold text-blue-400">Borrador detectado.</span> ¿Restaurar contenido no guardado?
             </p>
             <div className="flex items-center gap-3 flex-shrink-0">
                 <button
                     onClick={onRestore}
-                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1.5 rounded-md transition-colors text-xs"
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors text-xs shadow-lg shadow-blue-900/20"
                 >
                     <RefreshIcon />
                     Restaurar
                 </button>
                 <button
                     onClick={onDismiss}
-                    className="p-1 text-gray-400 hover:text-white rounded-full hover:bg-gray-700 transition-colors"
+                    className="p-1 text-gray-400 hover:text-white rounded-full hover:bg-white/10 transition-colors"
                     aria-label="Descartar borrador"
                 >
                     <CloseIcon />
@@ -103,12 +101,14 @@ const App: React.FC = () => {
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [shareableLink, setShareableLink] = useState('');
     
+    // CRITICAL: This state ensures we don't overwrite localStorage with empty data before loading completes.
+    const [isInitialized, setIsInitialized] = useState(false);
+
     const promptDataRef = useRef(promptData);
     promptDataRef.current = promptData;
     const variablesRef = useRef(variables);
     variablesRef.current = variables;
 
-    // FIX: Removed API Key Management State as per guidelines.
     
     // Auto-save logic
     useEffect(() => {
@@ -128,45 +128,73 @@ const App: React.FC = () => {
 
     // Load history, auto-saved prompt, and API keys on initial render
     useEffect(() => {
-        try {
-             // Load shared prompt from URL first
-            const hash = window.location.hash;
-            if (hash.startsWith('#prompt=')) {
-                const encodedData = hash.substring('#prompt='.length);
-                const decodedData = atob(encodedData);
-                const sharedData: ShareablePromptData = JSON.parse(decodedData);
-                
-                setPromptData(sharedData.promptData);
-                setVariables(sharedData.variables || []);
-                setNiche(sharedData.niche);
-                setGeneratedPrompt(sharedData.generatedPrompt);
+        const initializeApp = () => {
+            try {
+                // 1. ALWAYS Load history first to prevent data loss
+                const savedHistory = localStorage.getItem('promptHistory');
+                if (savedHistory) {
+                    setHistory(JSON.parse(savedHistory));
+                }
 
-                setToastMessage('¡Prompt compartido cargado con éxito!');
-                setTimeout(() => setToastMessage(''), 3000);
+                // 2. Check for shared prompt in URL
+                const hash = window.location.hash;
+                if (hash.startsWith('#prompt=')) {
+                    try {
+                        const encodedData = hash.substring('#prompt='.length);
+                        const decodedData = atob(encodedData);
+                        const sharedData: Partial<ShareablePromptData> = JSON.parse(decodedData);
+                        
+                        const initialPromptData = {
+                            agentRole: '', personality: '', toneAndLanguage: '', 
+                            responseGuidelines: '', task: '', context: '', 
+                            stepByStep: '', notes: ''
+                        };
 
-                // Clean the URL
-                window.history.replaceState(null, '', ' ');
-                return; // Don't load local data if we loaded from a share link
+                        setPromptData(sharedData.promptData || initialPromptData);
+                        setVariables(sharedData.variables || []);
+                        setNiche(sharedData.niche || '');
+                        setGeneratedPrompt(sharedData.generatedPrompt || '');
+
+                        setToastMessage('¡Prompt compartido cargado con éxito!');
+                        setTimeout(() => setToastMessage(''), 3000);
+
+                        // Clean the URL
+                        window.history.replaceState(null, '', ' ');
+                        
+                        // If we loaded from URL, we skip loading autosave draft to avoid conflict
+                        return; 
+                    } catch (err) {
+                        console.error("Error loading shared prompt", err);
+                        // If URL load fails, continue to load autosave
+                    }
+                }
+
+                // 3. Load AutoSave (only if no shared prompt was loaded)
+                const savedPrompt = localStorage.getItem('autoSavedPrompt');
+                if (savedPrompt) {
+                    setAutoSavedData(JSON.parse(savedPrompt));
+                }
+
+            } catch (e) { 
+                console.error("Failed to load data from localStorage or URL", e); 
+            } finally {
+                // Mark initialization as complete, allowing saves to occur
+                setIsInitialized(true);
             }
+        };
 
-            const savedHistory = localStorage.getItem('promptHistory');
-            if (savedHistory) setHistory(JSON.parse(savedHistory));
-
-            const savedPrompt = localStorage.getItem('autoSavedPrompt');
-            if (savedPrompt) setAutoSavedData(JSON.parse(savedPrompt));
-            // FIX: Removed loading API keys from localStorage.
-
-        } catch (e) { console.error("Failed to load data from localStorage or URL", e); }
+        initializeApp();
     }, []);
 
-    // Persist history to localStorage whenever it changes
+    // Persist history to localStorage whenever it changes, BUT ONLY after initialization
     useEffect(() => {
+        if (!isInitialized) return; // CRITICAL: Prevent saving empty history on initial render before load
+        
         try {
             localStorage.setItem('promptHistory', JSON.stringify(history));
         } catch (e) { console.error("Failed to save history to localStorage", e); }
-    }, [history]);
+    }, [history, isInitialized]);
     
-    // FIX: Removed useEffect for persisting API keys.
 
     // Speech Recognition Setup
     useEffect(() => {
@@ -291,7 +319,6 @@ const App: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
-        // FIX: Removed API key validation. The key is now sourced from environment variables.
         
         const trimmedRole = promptData.agentRole.trim();
         const trimmedTask = promptData.task.trim();
@@ -331,7 +358,6 @@ const App: React.FC = () => {
 
 
         try {
-            // FIX: Removed passing the API key, as it's now handled by the geminiService.
             const perfectPrompt = await generatePerfectPrompt(substitutedPromptData);
             setGeneratedPrompt(perfectPrompt);
             const newHistoryItem: PromptHistoryItem = {
@@ -461,32 +487,66 @@ const App: React.FC = () => {
         setVariables(prev => prev.filter(v => v.id !== id));
     };
 
+    // Handle variable edits coming from the Markdown Editor (click on {{variable}})
+    const handleVariableEditFromEditor = (oldName: string, newName: string, newValue: string) => {
+        if (oldName !== newName) {
+            const regex = new RegExp(`{{${oldName}}}`, 'g');
+            setGeneratedPrompt(prev => prev.replace(regex, `{{${newName}}}`));
+        }
 
-    // --- FIX: Removed API Key Handlers ---
+        setVariables(prev => {
+            const existingIndex = prev.findIndex(v => v.name === oldName);
+            
+            if (existingIndex >= 0) {
+                const updated = [...prev];
+                updated[existingIndex] = { 
+                    ...updated[existingIndex], 
+                    name: newName, 
+                    value: newValue 
+                };
+                return updated;
+            } else {
+                return [...prev, { 
+                    id: Date.now().toString(), 
+                    name: newName, 
+                    value: newValue 
+                }];
+            }
+        });
+        
+        setToastMessage('Variable actualizada');
+        setTimeout(() => setToastMessage(''), 2000);
+    };
+
+
     
     return (
-        <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center p-4 sm:p-6 lg:p-8 font-sans">
+        <div className="min-h-screen bg-deep-900 text-gray-100 flex flex-col items-center p-4 sm:p-6 lg:p-8 font-sans">
             <Toast message={toastMessage} show={!!toastMessage} />
             <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} link={shareableLink} />
-            {/* FIX: Removed ApiKeyManager component to comply with guidelines. */}
 
             <div className="w-full max-w-5xl mx-auto mb-20">
                 <header className="relative text-center mb-12 no-print">
-                     {/* FIX: Removed the settings button for API key management. */}
-                    <div className="flex justify-center items-center gap-3 sm:gap-4">
+                    <div className="flex justify-center items-center gap-3 sm:gap-4 mb-2">
                         <Logo />
-                        <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-blue-500">
-                            VoxWizard IA
+                        <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 tracking-tight">
+                            DeepCode
                         </h1>
                     </div>
-                    <p className="mt-4 text-lg text-gray-400">
-                        Diseña prompts efectivos para IA de voz en plataformas como Retell y Vapi.
+                    <p className="text-cyan-400 font-mono text-sm uppercase tracking-widest">
+                        Open-Source Code Agent Generator
+                    </p>
+                    <p className="mt-4 text-lg text-gray-400 max-w-2xl mx-auto">
+                        Diseña prompts efectivos para agentes de voz con inteligencia artificial avanzada.
                     </p>
                 </header>
 
                 <PromptExamples onSelectExample={handleSelectExample} />
 
-                <main ref={formRef} className="bg-gray-800/50 backdrop-blur-sm p-6 sm:p-8 rounded-2xl shadow-2xl border border-gray-700 mt-12 no-print">
+                <main ref={formRef} className="bg-deep-800/80 backdrop-blur-md p-6 sm:p-8 rounded-2xl border border-cyan-900/30 shadow-2xl mt-12 no-print relative overflow-hidden">
+                    {/* Decorative top border glow */}
+                    <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-50"></div>
+
                     {autoSavedData && (
                         <AutoSaveNotification
                             onRestore={handleRestoreAutoSave}
@@ -496,14 +556,17 @@ const App: React.FC = () => {
                     
                     <form onSubmit={handleSubmit}>
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-semibold text-gray-300">Detalles del Prompt</h2>
+                            <h2 className="text-xl font-bold text-cyan-400 uppercase tracking-wide flex items-center gap-2">
+                                <span className="w-2 h-2 bg-cyan-400 rounded-full shadow-[0_0_8px_rgba(34,211,238,0.8)]"></span>
+                                Configuración del Agente
+                            </h2>
                             <button
                                 type="button"
                                 onClick={handleClearForm}
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-gray-700/50 hover:bg-red-900/50 text-gray-300 hover:text-red-300 rounded-md transition-colors"
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-red-900/20 hover:bg-red-900/40 text-red-400 border border-red-900/50 rounded-md transition-colors"
                             >
                                 <TrashIcon />
-                                Limpiar Formulario
+                                Limpiar
                             </button>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -512,7 +575,7 @@ const App: React.FC = () => {
                                     label="Rol del Agente"
                                     value={promptData.agentRole}
                                     onChange={(e) => handleInputChange('agentRole', e.target.value)}
-                                    placeholder="Ej: Eres Maria, una asistente virtual amigable de la peluquería IA360..."
+                                    placeholder="Ej: Eres Maria, una asistente virtual amigable..."
                                     helpText="Describe quién es el agente y su propósito principal. (Obligatorio)"
                                     required
                                     onMicClick={() => handleMicClick('agentRole')}
@@ -525,7 +588,7 @@ const App: React.FC = () => {
                                     label="Tarea Principal"
                                     value={promptData.task}
                                     onChange={(e) => handleInputChange('task', e.target.value)}
-                                    placeholder="Ej: Proveer información de servicios y cualificar clientes potenciales."
+                                    placeholder="Ej: Proveer información de servicios y cualificar clientes."
                                     helpText="El objetivo clave que el agente debe cumplir. (Obligatorio)"
                                     required
                                     onMicClick={() => handleMicClick('task')}
@@ -537,7 +600,7 @@ const App: React.FC = () => {
                                 label="Personalidad"
                                 value={promptData.personality}
                                 onChange={(e) => handleInputChange('personality', e.target.value)}
-                                placeholder="Ej: Cercana, espontánea, con acento español, servicial..."
+                                placeholder="Ej: Cercana, espontánea, servicial..."
                                 helpText="Define el estilo y la forma de hablar del agente."
                                 onMicClick={() => handleMicClick('personality')}
                                 isListening={listeningField === 'personality'}
@@ -547,7 +610,7 @@ const App: React.FC = () => {
                                 label="Tono y Lenguaje"
                                 value={promptData.toneAndLanguage}
                                 onChange={(e) => handleInputChange('toneAndLanguage', e.target.value)}
-                                placeholder="Ej: Formal, usa 'usted', lenguaje técnico y preciso..."
+                                placeholder="Ej: Formal, usa 'usted', lenguaje técnico..."
                                 helpText="Especifica el tono y las reglas del lenguaje a usar."
                                 onMicClick={() => handleMicClick('toneAndLanguage')}
                                 isListening={listeningField === 'toneAndLanguage'}
@@ -558,7 +621,7 @@ const App: React.FC = () => {
                                     label="Contexto (Base de Conocimiento)"
                                     value={promptData.context}
                                     onChange={(e) => handleInputChange('context', e.target.value)}
-                                    placeholder="Ej: Servicios: Corte (30€), Tinte (50€). Horario: L-V 10-20h. Ubicación: C/ Falsa 123, Madrid."
+                                    placeholder="Ej: Servicios: Corte (30€), Tinte (50€). Horario: L-V 10-20h..."
                                     helpText="Toda la información que el agente necesita para responder preguntas."
                                     isTextarea
                                     onMicClick={() => handleMicClick('context')}
@@ -570,10 +633,9 @@ const App: React.FC = () => {
                                 label="Directrices de Respuesta"
                                 value={promptData.responseGuidelines}
                                 onChange={(e) => handleInputChange('responseGuidelines', e.target.value)}
-                                placeholder="Ej: Sé siempre amable. Usa frases cortas. Si no sabes algo, di 'No tengo esa información'."
+                                placeholder="Ej: Sé siempre amable. Usa frases cortas..."
                                 helpText="Reglas sobre cómo deben ser las respuestas del agente."
                                 isTextarea
-                                // FIX: Corrected onMicClick handler. It was incorrectly calling handleInputChange which caused a reference error because 'e' was not defined. It should call handleMicClick to manage the microphone state.
                                 onMicClick={() => handleMicClick('responseGuidelines')}
                                 isListening={listeningField === 'responseGuidelines'}
                                 micSupported={micSupported}
@@ -582,7 +644,7 @@ const App: React.FC = () => {
                                 label="Flujo de Conversación (Paso a Paso)"
                                 value={promptData.stepByStep}
                                 onChange={(e) => handleInputChange('stepByStep', e.target.value)}
-                                placeholder="Ej: 1. Saludar y preguntar nombre. 2. Realizar preguntas de cualificación. 3. Pedir email..."
+                                placeholder="Ej: 1. Saludar. 2. Preguntar nombre. 3. Pedir email..."
                                 helpText="Define un guion o los pasos que el agente debe seguir."
                                 isTextarea
                                 onMicClick={() => handleMicClick('stepByStep')}
@@ -594,7 +656,7 @@ const App: React.FC = () => {
                                     label="Notas Adicionales"
                                     value={promptData.notes}
                                     onChange={(e) => handleInputChange('notes', e.target.value)}
-                                    placeholder="Ej: Evitar temas no relacionados, si preguntan por 'Rita' decir que está ocupada..."
+                                    placeholder="Ej: Evitar temas no relacionados..."
                                     helpText="Reglas específicas o manejo de casos excepcionales."
                                     onMicClick={() => handleMicClick('notes')}
                                     isListening={listeningField === 'notes'}
@@ -602,7 +664,7 @@ const App: React.FC = () => {
                                 />
                             </div>
 
-                             <div className="md:col-span-2 pt-4 border-t border-gray-700">
+                             <div className="md:col-span-2 pt-6 border-t border-cyan-900/30">
                                 <InputField
                                     label="Nicho del Prompt"
                                     value={niche}
@@ -616,7 +678,7 @@ const App: React.FC = () => {
                                 />
                             </div>
 
-                             <div className="md:col-span-2 pt-4 border-t border-gray-700">
+                             <div className="md:col-span-2 pt-6 border-t border-cyan-900/30">
                                 <DynamicVariables 
                                     variables={variables}
                                     onAdd={handleAddVariable}
@@ -629,25 +691,25 @@ const App: React.FC = () => {
                             </div>
 
                         </div>
-                        {error && <p className="text-red-400 text-center mt-4">{error}</p>}
+                        {error && <p className="text-red-400 text-center mt-4 bg-red-900/20 p-2 rounded border border-red-900/50">{error}</p>}
                         <div className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-lg shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
+                                className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold rounded-lg shadow-lg shadow-emerald-900/30 transition-all duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
                             >
                                 {isLoading ? <Spinner /> : <SparklesIcon />}
-                                {isLoading ? 'Generando...' : 'Crear y Guardar Prompt'}
+                                {isLoading ? 'Procesando...' : 'Full workflow with indexing enabled'}
                             </button>
                              {generatedPrompt && !isLoading && (
                                 <button
                                     type="button"
                                     onClick={handleSaveToHistory}
-                                    className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg shadow-md transition-colors duration-200"
+                                    className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 bg-cyan-900/30 hover:bg-cyan-800/50 border border-cyan-700 text-cyan-300 font-semibold rounded-lg shadow-md transition-colors duration-200"
                                     aria-label="Guardar el prompt actual en el historial"
                                 >
                                     <PlusIcon />
-                                    Guardar en Historial
+                                    Guardar en DB
                                 </button>
                             )}
                         </div>
@@ -659,35 +721,46 @@ const App: React.FC = () => {
                          <div className="print-header-content hidden">
                             <h2>System Prompt Optimizado</h2>
                         </div>
-                        <h2 className="text-2xl font-semibold text-center mb-4 text-gray-300 no-print">Tu System Prompt Optimizado</h2>
-                        <div className="relative bg-gray-900/70 p-6 rounded-lg border border-gray-700 min-h-[150px]">
+                        <h2 className="text-2xl font-bold text-center mb-4 text-cyan-400 no-print uppercase tracking-wide">
+                             System Prompt Generated
+                        </h2>
+                        <div className="relative bg-deep-900/80 p-6 rounded-xl border border-cyan-900/30 min-h-[150px] shadow-2xl">
+                            {/* Header glow strip */}
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 via-purple-500 to-cyan-500"></div>
+                            
                             {isLoading ? (
-                                <div className="flex items-center justify-center h-full">
-                                    <div className="animate-pulse text-gray-500">Analizando y construyendo...</div>
+                                <div className="flex flex-col items-center justify-center h-32 gap-4">
+                                    <Spinner />
+                                    <div className="animate-pulse text-cyan-400 font-mono text-sm">AI Agent Processing...</div>
                                 </div>
                             ) : (
                                 <>
-                                    <div className="absolute top-2 right-2 flex gap-2 no-print">
+                                    <div className="absolute top-4 right-4 flex gap-2 no-print z-10">
                                         <IconButton
                                             onClick={handleOpenShareModal}
-                                            text="Compartir"
+                                            text="Share"
                                             icon={<ShareIcon />}
-                                            className="bg-gray-700/50 hover:bg-gray-600/50 text-gray-300"
+                                            className="bg-deep-700 hover:bg-deep-700/80 text-gray-300 border border-gray-600/50"
                                         />
                                         <IconButton
                                             onClick={handleCopy}
-                                            text={isCopied ? 'Copiado' : 'Copiar'}
+                                            text={isCopied ? 'Copied' : 'Copy'}
                                             icon={isCopied ? <CheckIcon /> : <CopyIcon />}
-                                            className={isCopied ? 'bg-green-600/30 text-green-300' : 'bg-gray-700/50 hover:bg-gray-600/50 text-gray-300'}
+                                            className={isCopied ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-500/50' : 'bg-deep-700 hover:bg-deep-700/80 text-gray-300 border border-gray-600/50'}
                                         />
                                         <IconButton
                                             onClick={handleExportPdf}
-                                            text="Exportar PDF"
+                                            text="PDF"
                                             icon={<PdfIcon />}
-                                            className="bg-gray-700/50 hover:bg-gray-600/50 text-gray-300"
+                                            className="bg-deep-700 hover:bg-deep-700/80 text-gray-300 border border-gray-600/50"
                                         />
                                     </div>
-                                    <MarkdownEditor value={generatedPrompt} onChange={setGeneratedPrompt} />
+                                    <MarkdownEditor 
+                                        value={generatedPrompt} 
+                                        onChange={setGeneratedPrompt}
+                                        variables={variables}
+                                        onVariableUpdate={handleVariableEditFromEditor}
+                                    />
                                 </>
                             )}
                         </div>

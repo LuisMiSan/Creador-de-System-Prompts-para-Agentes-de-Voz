@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { VoiceAgentPromptData } from '../types';
 import { HeadsetIcon, ChartBarIcon, WrenchScrewdriverIcon, SparklesIcon, MarkdownIcon } from './Icons';
@@ -101,30 +102,30 @@ const examples: Example[] = [
 const PromptExamples: React.FC<PromptExamplesProps> = ({ onSelectExample }) => {
     return (
         <section className="mb-12">
-            <h2 className="text-2xl font-bold text-center text-gray-300 mb-2">¿No sabes por dónde empezar?</h2>
-            <p className="text-center text-gray-400 mb-8">Usa una de nuestras plantillas probadas para arrancar.</p>
+            <h2 className="text-2xl font-bold text-center text-cyan-400 mb-2 uppercase tracking-wide">Core Templates</h2>
+            <p className="text-center text-gray-500 mb-8 font-mono text-sm">Select a preset configuration to initialize agent.</p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {examples.map((example) => (
                     <div 
                         key={example.title}
-                        className="bg-gray-800/40 border border-gray-700 rounded-xl p-6 flex flex-col items-start hover:border-orange-500/50 hover:bg-gray-800/80 transition-all duration-300 group"
+                        className="bg-[#131b2e]/80 border border-gray-700 rounded-xl p-6 flex flex-col items-start hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(34,211,238,0.15)] transition-all duration-300 group backdrop-blur-sm"
                     >
                         <div className="flex items-center gap-4 mb-3">
-                             <div className="bg-gray-700/50 p-2 rounded-lg text-orange-400">
+                             <div className="bg-[#0B0F19] border border-gray-700 p-2 rounded-lg text-cyan-400 shadow-lg">
                                 {example.icon}
                              </div>
-                             <h3 className="text-lg font-bold text-gray-100">{example.title}</h3>
+                             <h3 className="text-lg font-bold text-gray-200 group-hover:text-cyan-300 transition-colors">{example.title}</h3>
                         </div>
 
-                        <p className="text-gray-400 text-sm mb-5 flex-grow">{example.description}</p>
+                        <p className="text-gray-400 text-sm mb-5 flex-grow leading-relaxed">{example.description}</p>
                         
                         <button 
                             onClick={() => onSelectExample(example.data)}
-                            className="w-full flex items-center justify-center gap-2 mt-auto px-4 py-2 bg-gray-700/50 hover:bg-orange-600/80 text-gray-300 hover:text-white font-semibold rounded-lg transition-colors text-sm"
+                            className="w-full flex items-center justify-center gap-2 mt-auto px-4 py-2 bg-[#0B0F19] hover:bg-cyan-900/20 border border-gray-700 hover:border-cyan-500 text-gray-300 hover:text-cyan-400 font-semibold rounded-lg transition-all duration-200 text-sm"
                         >
                             <SparklesIcon/>
-                            Usar esta plantilla
+                            Load Template
                         </button>
                     </div>
                 ))}

@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 const Logo: React.FC<{ className?: string }> = ({ className = "h-12 w-12 sm:h-14 sm:w-14" }) => {
@@ -10,8 +11,8 @@ const Logo: React.FC<{ className?: string }> = ({ className = "h-12 w-12 sm:h-14
         >
             <defs>
                 <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#fb923c" />
-                    <stop offset="100%" stopColor="#3b82f6" />
+                    <stop offset="0%" stopColor="#22d3ee" /> {/* Cyan */}
+                    <stop offset="100%" stopColor="#a855f7" /> {/* Purple */}
                 </linearGradient>
             </defs>
             {/* Wizard Hat */}

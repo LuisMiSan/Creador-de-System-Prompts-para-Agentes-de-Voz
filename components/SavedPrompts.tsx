@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { PromptHistoryItem } from '../types';
 import { HistoryIcon, TrashIcon, DownloadIcon, PdfIcon, ChevronDownIcon, ChevronUpIcon, SearchIcon } from './Icons';
@@ -24,9 +25,9 @@ const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete
         const query = searchQuery.toLowerCase();
         if (!query) return true;
         
-        const nicheMatch = item.niche.toLowerCase().includes(query);
-        const roleMatch = item.promptData.agentRole.toLowerCase().includes(query);
-        const promptMatch = item.generatedPrompt.toLowerCase().includes(query);
+        const nicheMatch = (item.niche || '').toLowerCase().includes(query);
+        const roleMatch = (item.promptData?.agentRole || '').toLowerCase().includes(query);
+        const promptMatch = (item.generatedPrompt || '').toLowerCase().includes(query);
 
         return nicheMatch || roleMatch || promptMatch;
     });
@@ -35,7 +36,7 @@ const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete
         let markdownContent = "# Mi Base de Datos de Prompts\n\n";
 
         items.forEach(item => {
-            markdownContent += `## Prompt para: ${item.niche}\n\n`;
+            markdownContent += `## Prompt para: ${item.niche || 'Sin Nicho'}\n\n`;
             markdownContent += `**Fecha:** ${new Date(item.timestamp).toLocaleString('es-ES')}\n\n`;
             markdownContent += "### Datos de Entrada:\n";
             markdownContent += "```json\n" + JSON.stringify(item.promptData, null, 2) + "\n```\n\n";
@@ -52,7 +53,7 @@ const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'voxwizard-prompts-filtrados.md';
+        a.download = 'deepcode-prompts.md';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -78,8 +79,8 @@ const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete
         if (!value || value.trim() === '') return null;
         return (
             <div>
-                <dt className="font-semibold text-gray-400">{label}</dt>
-                <dd className={`text-gray-200 mt-1 ${isPreWrap ? 'whitespace-pre-wrap' : ''}`}>{value}</dd>
+                <dt className="font-bold text-cyan-500/80 text-xs uppercase tracking-wider mb-1">{label}</dt>
+                <dd className={`text-gray-300 text-sm ${isPreWrap ? 'whitespace-pre-wrap' : ''}`}>{value}</dd>
             </div>
         );
     };
@@ -89,40 +90,40 @@ const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete
         <section id="history-print-area" className="mt-12">
             <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-8 no-print">
                 <div className="text-center md:text-left flex-shrink-0">
-                    <h2 className="text-2xl font-bold text-gray-300 flex items-center justify-center sm:justify-start gap-3">
-                        <HistoryIcon />
-                        Mi Base de Datos de Prompts
+                    <h2 className="text-2xl font-bold text-cyan-400 flex items-center justify-center sm:justify-start gap-3 uppercase tracking-wide">
+                        <span className="w-1 h-6 bg-purple-500 rounded-full"></span>
+                        Processing History
                     </h2>
-                    <p className="text-gray-400">Aquí se guardan todos los prompts que creas. Haz clic en una fila para cargarla.</p>
+                    <p className="text-gray-500 text-sm font-mono mt-1">Database records and generated outputs.</p>
                 </div>
                 {history.length > 0 && (
                      <div className="w-full md:w-auto flex flex-col sm:flex-row items-center gap-3">
                         <div className="relative w-full sm:w-auto">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
                                 <SearchIcon />
                             </div>
                             <input
                                 type="text"
-                                placeholder="Buscar por nicho o palabra clave..."
+                                placeholder="Search logs..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 text-sm bg-gray-700/50 border border-gray-600 rounded-lg text-gray-200 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 placeholder-gray-500 transition-colors"
+                                className="w-full pl-10 pr-4 py-2 text-sm bg-[#0B0F19] border border-gray-700 rounded-lg text-gray-200 focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 placeholder-gray-600 transition-colors"
                             />
                         </div>
                         <div className="flex items-center gap-3 w-full sm:w-auto">
                             <button
                                 onClick={() => handleExportMarkdown(filteredHistory)}
-                                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/70 text-gray-300 font-semibold rounded-lg transition-colors"
+                                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 text-xs bg-[#1e293b] hover:bg-cyan-900/20 border border-gray-700 hover:border-cyan-500/50 text-gray-300 font-semibold rounded-lg transition-colors uppercase tracking-wider"
                             >
                                 <DownloadIcon />
-                                Exportar
+                                Export
                             </button>
                             <button
                                 onClick={handlePrint}
-                                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/70 text-gray-300 font-semibold rounded-lg transition-colors"
+                                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 text-xs bg-[#1e293b] hover:bg-cyan-900/20 border border-gray-700 hover:border-cyan-500/50 text-gray-300 font-semibold rounded-lg transition-colors uppercase tracking-wider"
                             >
                                 <PdfIcon />
-                                PDF
+                                Print
                             </button>
                         </div>
                     </div>
@@ -130,73 +131,71 @@ const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete
             </div>
 
             <div className="print-header-content hidden">
-                 <h2 className="text-2xl font-bold">Mi Base de Datos de Prompts</h2>
+                 <h2 className="text-2xl font-bold">System Prompt Database</h2>
             </div>
 
             {history.length === 0 ? (
-                <div className="text-center py-12 bg-gray-800/30 border border-dashed border-gray-700 rounded-xl no-print">
-                    <HistoryIcon className="w-12 h-12 mx-auto text-gray-600 mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-400">Tu base de datos está vacía</h3>
-                    <p className="text-gray-500">Rellena el formulario para empezar a crear y guardar prompts.</p>
+                <div className="text-center py-12 bg-[#131b2e]/50 border border-dashed border-gray-700 rounded-xl no-print">
+                    <HistoryIcon className="w-12 h-12 mx-auto text-gray-700 mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-500">No processing history yet</h3>
+                    <p className="text-gray-600 text-sm">Generate your first prompt to populate this table.</p>
                 </div>
             ) : filteredHistory.length === 0 ? (
-                 <div className="text-center py-12 bg-gray-800/30 border border-dashed border-gray-700 rounded-xl no-print">
+                 <div className="text-center py-12 bg-[#131b2e]/50 border border-dashed border-gray-700 rounded-xl no-print">
                     <SearchIcon />
-                    <h3 className="text-lg font-semibold text-gray-400 mt-4">No se encontraron prompts</h3>
-                    <p className="text-gray-500">Prueba con otra palabra clave o limpia la búsqueda.</p>
+                    <h3 className="text-lg font-semibold text-gray-500 mt-4">No matches found</h3>
                 </div>
             ) : (
-                <div className="bg-gray-800/60 border border-gray-700 rounded-xl overflow-hidden shadow-lg">
+                <div className="bg-[#131b2e] border border-gray-700 rounded-xl overflow-hidden shadow-xl">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm text-left text-gray-400">
-                            <thead className="text-xs text-gray-300 uppercase bg-gray-900/50">
+                            <thead className="text-xs text-cyan-400 uppercase bg-[#0B0F19] border-b border-gray-700">
                                 <tr>
-                                    <th scope="col" className="px-6 py-3">
-                                        Empresa / Nicho
+                                    <th scope="col" className="px-6 py-4 tracking-wider">
+                                        Niche / Tag
                                     </th>
-                                    <th scope="col" className="px-6 py-3">
-                                        Prompt
+                                    <th scope="col" className="px-6 py-4 tracking-wider">
+                                        Agent Definition
                                     </th>
-                                    <th scope="col" className="px-6 py-3">
-                                        Fecha
+                                    <th scope="col" className="px-6 py-4 tracking-wider">
+                                        Timestamp
                                     </th>
-                                    <th scope="col" className="px-6 py-3 text-right no-print w-28">
-                                        Acciones
+                                    <th scope="col" className="px-6 py-4 text-right no-print w-28">
+                                        Action
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-gray-800">
                                 {filteredHistory.map(item => (
                                     <React.Fragment key={item.id}>
                                         <tr 
-                                            className="border-b border-gray-700 hover:bg-gray-800/70 cursor-pointer transition-colors duration-200"
+                                            className="hover:bg-cyan-900/10 cursor-pointer transition-colors duration-200"
                                             onClick={() => onSelect(item)}
                                         >
                                             <td className="px-6 py-4 align-top">
-                                                <span className="bg-orange-900/70 text-orange-300 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap capitalize">
-                                                    {item.niche || 'Sin Nicho'}
+                                                <span className="bg-purple-900/30 text-purple-300 border border-purple-500/30 px-2.5 py-1 rounded text-xs font-mono whitespace-nowrap uppercase tracking-wide">
+                                                    {item.niche || 'GENERIC'}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 align-top">
-                                                <div className="font-bold text-gray-200 line-clamp-1">
-                                                    {item.promptData.agentRole || 'Prompt sin rol'}
+                                                <div className="font-bold text-gray-200 line-clamp-1 text-sm mb-1">
+                                                    {item.promptData?.agentRole || 'Undefined Role'}
                                                 </div>
-                                                <div className="text-gray-500 mt-1 line-clamp-2">
-                                                    {item.generatedPrompt}
+                                                <div className="text-gray-500 font-mono text-xs line-clamp-1">
+                                                    ID: {item.id.substring(0, 8)}...
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap align-top">
-                                                {new Date(item.timestamp).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                            <td className="px-6 py-4 whitespace-nowrap align-top font-mono text-xs text-gray-500">
+                                                {new Date(item.timestamp).toLocaleDateString('en-GB')} <span className="text-gray-600">{new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                                             </td>
                                             <td className="px-6 py-4 text-right no-print align-top">
-                                                <div className="flex items-center justify-end">
+                                                <div className="flex items-center justify-end gap-1">
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             handleToggleExpand(item.id);
                                                         }}
-                                                        className="p-2 text-gray-500 hover:text-orange-400 hover:bg-orange-500/10 rounded-full transition-colors"
-                                                        aria-label="Ver detalles"
+                                                        className="p-1.5 text-gray-500 hover:text-cyan-400 hover:bg-cyan-500/10 rounded transition-colors"
                                                     >
                                                         {expandedId === item.id ? <ChevronUpIcon /> : <ChevronDownIcon />}
                                                     </button>
@@ -205,8 +204,7 @@ const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete
                                                             e.stopPropagation(); 
                                                             onDelete(item.id);
                                                         }}
-                                                        className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-full transition-colors"
-                                                        aria-label="Eliminar prompt"
+                                                        className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
                                                     >
                                                         <TrashIcon />
                                                     </button>
@@ -214,41 +212,47 @@ const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete
                                             </td>
                                         </tr>
                                         {expandedId === item.id && (
-                                            <tr className="bg-gray-900/40 no-print">
-                                                <td colSpan={4} className="p-0">
-                                                    <div className="p-6 bg-gray-800/50">
-                                                        <h4 className="text-base font-semibold text-gray-200 mb-4">Detalles Completos del Prompt</h4>
-                                                        <dl className="space-y-4 text-sm">
-                                                            {renderDetail("Rol del Agente", item.promptData.agentRole)}
-                                                            {renderDetail("Tarea Principal", item.promptData.task)}
-                                                            {renderDetail("Personalidad", item.promptData.personality)}
-                                                            {renderDetail("Tono y Lenguaje", item.promptData.toneAndLanguage)}
-                                                            {renderDetail("Contexto (Base de Conocimiento)", item.promptData.context, true)}
-                                                            {renderDetail("Directrices de Respuesta", item.promptData.responseGuidelines, true)}
-                                                            {renderDetail("Flujo de Conversación (Paso a Paso)", item.promptData.stepByStep, true)}
-                                                            {renderDetail("Notas Adicionales", item.promptData.notes)}
+                                            <tr className="bg-[#0B0F19] no-print">
+                                                <td colSpan={4} className="p-0 border-l-4 border-cyan-500">
+                                                    <div className="p-6 grid grid-cols-1 gap-6">
+                                                        <h4 className="text-sm font-bold text-cyan-400 uppercase tracking-wider border-b border-gray-800 pb-2">System Log Details</h4>
+                                                        <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                                                            {item.promptData ? (
+                                                                <>
+                                                                    {renderDetail("Agent Role", item.promptData.agentRole)}
+                                                                    {renderDetail("Task", item.promptData.task)}
+                                                                    {renderDetail("Personality", item.promptData.personality)}
+                                                                    {renderDetail("Tone", item.promptData.toneAndLanguage)}
+                                                                    <div className="md:col-span-2 bg-[#131b2e] p-3 rounded border border-gray-800">
+                                                                        {renderDetail("Context / Knowledge Base", item.promptData.context, true)}
+                                                                    </div>
+                                                                    <div className="md:col-span-2 bg-[#131b2e] p-3 rounded border border-gray-800">
+                                                                        {renderDetail("Guidelines", item.promptData.responseGuidelines, true)}
+                                                                    </div>
+                                                                </>
+                                                            ) : null}
                                                             
                                                              {item.variables && item.variables.length > 0 && (
-                                                                <div className="pt-4 border-t border-gray-700">
-                                                                    <dt className="font-semibold text-gray-400 mb-2">Variables Dinámicas</dt>
+                                                                <div className="md:col-span-2 pt-2">
+                                                                    <dt className="font-bold text-purple-400 text-xs uppercase tracking-wider mb-2">Defined Variables</dt>
                                                                     <dd>
-                                                                        <ul className="space-y-2">
+                                                                        <div className="flex flex-wrap gap-2">
                                                                             {item.variables.map(v => (
-                                                                                <li key={v.id} className="flex items-center gap-2 p-2 bg-gray-900 rounded-md">
-                                                                                    <span className="font-mono text-xs bg-gray-700 text-orange-300 px-2 py-1 rounded">{`{{${v.name}}}`}</span>
-                                                                                    <span className="text-gray-400">→</span>
-                                                                                    <span className="text-gray-200">{v.value}</span>
-                                                                                </li>
+                                                                                <span key={v.id} className="flex items-center gap-2 px-2 py-1 bg-purple-900/20 border border-purple-500/30 rounded text-xs">
+                                                                                    <span className="font-mono text-purple-300">{`{{${v.name}}}`}</span>
+                                                                                    <span className="text-gray-500">=</span>
+                                                                                    <span className="text-gray-300">{v.value}</span>
+                                                                                </span>
                                                                             ))}
-                                                                        </ul>
+                                                                        </div>
                                                                     </dd>
                                                                 </div>
                                                             )}
 
                                                             {item.generatedPrompt && (
-                                                                <div className="pt-4 border-t border-gray-700">
-                                                                    <dt className="font-semibold text-gray-400 mb-1">Prompt Generado</dt>
-                                                                    <dd className="whitespace-pre-wrap font-mono text-xs text-gray-300 bg-gray-900 p-4 rounded-md border border-gray-700">
+                                                                <div className="md:col-span-2 pt-4 mt-2 border-t border-gray-800">
+                                                                    <dt className="font-bold text-cyan-400 text-xs uppercase tracking-wider mb-2">Compiled Output</dt>
+                                                                    <dd className="whitespace-pre-wrap font-mono text-xs text-gray-300 bg-[#020617] p-4 rounded border border-gray-700">
                                                                         {item.generatedPrompt}
                                                                     </dd>
                                                                 </div>

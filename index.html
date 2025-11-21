@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,35 +7,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>VoxWizard IA</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              deep: {
+                900: '#0B0F19', // Main background similar to image
+                800: '#131b2e', // Panel background
+                700: '#1e293b', // Borders
+              },
+              neon: {
+                cyan: '#22d3ee',
+                purple: '#a855f7',
+                blue: '#3b82f6'
+              }
+            }
+          }
+        }
+      }
+    </script>
     <style>
       body {
         font-family: 'Inter', sans-serif;
+        background-color: #0B0F19; /* Deep dark background */
+        background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #0B0F19 70%);
       }
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
       
-      .hidden-for-screen {
-        display: none;
+      /* Scrollbar styling for DeepCode look */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0B0F19; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #1e293b; 
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #334155; 
       }
 
       /* Markdown Preview Styles for Screen */
       .prose-styles {
-        color: #d1d5db; /* text-gray-300 */
+        color: #cbd5e1; /* text-slate-300 */
         line-height: 1.7;
       }
       .prose-styles h3 {
-        font-size: 1.25rem; /* text-xl */
-        font-weight: 600; /* font-semibold */
+        font-size: 1.25rem; 
+        font-weight: 600; 
         margin-top: 1.5rem;
         margin-bottom: 1rem;
         padding-bottom: 0.5rem;
-        border-bottom: 1px solid #4b5563; /* border-gray-600 */
-        color: #f9fafb; /* text-gray-50 */
+        border-bottom: 1px solid #1e293b; /* darker border */
+        color: #22d3ee; /* Neon Cyan headers */
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
       }
       .prose-styles ul, .prose-styles ol {
         margin-left: 1.5rem;
         margin-bottom: 1rem;
       }
-      .prose-styles ul { list-style-type: disc; }
+      .prose-styles ul { list-style-type: disc; marker: #22d3ee; }
       .prose-styles ol { list-style-type: decimal; }
       .prose-styles li {
         margin-bottom: 0.5rem;
@@ -43,24 +80,28 @@
         margin-bottom: 1rem;
       }
       .prose-styles a {
-        color: #fb923c; /* text-orange-400 */
+        color: #22d3ee; /* Cyan links */
+        text-decoration: none;
+      }
+      .prose-styles a:hover {
         text-decoration: underline;
       }
       .prose-styles strong {
         font-weight: 700;
-        color: #e5e7eb; /* text-gray-200 */
+        color: #f8fafc; /* White */
       }
       .prose-styles code {
-        background-color: #374151; /* bg-gray-700 */
-        color: #f3f4f6; /* text-gray-100 */
+        background-color: #0f172a; 
+        color: #a855f7; /* Neon Purple code */
         padding: 0.2rem 0.4rem;
         border-radius: 0.25rem;
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
         font-size: 0.9em;
+        border: 1px solid #1e293b;
       }
       .prose-styles pre {
-        background-color: #111827; /* bg-gray-900 */
-        border: 1px solid #374151; /* border-gray-700 */
+        background-color: #020617; /* Almost black */
+        border: 1px solid #1e293b; 
         border-radius: 0.5rem;
         padding: 1rem;
         overflow-x: auto;
@@ -69,13 +110,18 @@
       .prose-styles pre code {
         background-color: transparent;
         padding: 0;
+        border: none;
+        color: #e2e8f0;
       }
       .prose-styles blockquote {
-        border-left: 4px solid #4b5563; /* border-gray-600 */
+        border-left: 4px solid #22d3ee; /* Cyan border */
         padding-left: 1rem;
         margin-left: 0;
         font-style: italic;
-        color: #9ca3af; /* text-gray-400 */
+        color: #94a3b8; 
+        background: rgba(34, 211, 238, 0.05);
+        padding: 0.5rem 1rem;
+        border-radius: 0 4px 4px 0;
       }
 
       @media print {
@@ -136,19 +182,7 @@
             -webkit-line-clamp: unset !important;
             display: block !important;
         }
-        span[class*="bg-blue-900"] {
-            background-color: transparent !important;
-            color: black !important;
-            padding: 2px 4px !important;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            font-weight: normal;
-        }
         
-        .hidden-for-screen {
-            display: block !important;
-        }
-
         .prose-styles, .prose-styles * {
             color: black !important;
             background: transparent !important;
@@ -160,6 +194,7 @@
         .prose-styles h3 {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
             border-bottom: 2px solid #ccc !important;
+            color: black !important;
         }
         .prose-styles code {
             font-family: 'Courier New', Courier, monospace !important;
@@ -168,6 +203,7 @@
             padding: 1px 3px !important;
             -webkit-print-color-adjust: exact;
             color-adjust: exact;
+            color: black !important;
         }
         .prose-styles pre {
             background-color: #f8f8f8 !important;
@@ -178,26 +214,12 @@
             -webkit-print-color-adjust: exact;
             color-adjust: exact;
         }
-        .prose-styles pre code {
-            border: none !important;
-            background-color: transparent !important;
-        }
 
         .prompt-content-for-print {
             background-color: #ffffff !important;
             border: 1px solid #ccc !important;
             padding: 15px !important;
             border-radius: 4px !important;
-        }
-        
-        .font-bold {
-            font-weight: bold !important;
-        }
-        .text-gray-500 {
-            color: #555 !important;
-        }
-        .text-gray-200 {
-            color: black !important;
         }
       }
     </style>
@@ -214,7 +236,7 @@
 }
 </script>
 </head>
-<body class="bg-gray-900">
+<body class="bg-deep-900 text-slate-300">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 </body>
