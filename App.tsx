@@ -1,17 +1,19 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { VoiceAgentPromptData, PromptHistoryItem, DynamicVariable, ShareablePromptData, AutoSavedDraft } from './types';
-import { generatePerfectPrompt } from './services/geminiService';
+import { generatePerfectPrompt, generateSuggestions } from './services/geminiService';
 import InputField from './components/InputField';
 import Spinner from './components/Spinner';
 import IconButton from './components/IconButton';
 import PromptExamples from './components/PromptExamples';
 import SavedPrompts from './components/SavedPrompts';
-import { CopyIcon, CheckIcon, SparklesIcon, TrashIcon, CloseIcon, RefreshIcon, PlusIcon, PdfIcon, ShareIcon } from './components/Icons';
+import { CopyIcon, CheckIcon, SparklesIcon, TrashIcon, CloseIcon, RefreshIcon, PlusIcon, PdfIcon, ShareIcon, LanguageIcon } from './components/Icons';
 import Logo from './components/Logo';
 import DynamicVariables from './components/DynamicVariables';
 import MarkdownEditor from './components/MarkdownEditor';
 import ShareModal from './components/ShareModal';
+import SuggestionModal from './components/SuggestionModal';
+import { translations, Language } from './translations';
 
 // Extend the window object with SpeechRecognition
 interface CustomWindow extends Window {
@@ -43,13 +45,15 @@ const Toast: React.FC<ToastProps> = ({ message, show }) => {
 interface AutoSaveNotificationProps {
     onRestore: () => void;
     onDismiss: () => void;
+    lang: Language;
 }
 
-const AutoSaveNotification: React.FC<AutoSaveNotificationProps> = ({ onRestore, onDismiss }) => {
+const AutoSaveNotification: React.FC<AutoSaveNotificationProps> = ({ onRestore, onDismiss, lang }) => {
+    const t = translations[lang];
     return (
         <div className="bg-blue-900/30 border border-blue-500/30 p-4 rounded-xl mb-6 text-sm flex flex-col sm:flex-row items-center justify-between shadow-lg gap-4 backdrop-blur-sm">
             <p className="text-blue-200 text-center sm:text-left">
-                <span className="font-bold text-blue-400">Borrador detectado.</span> ¿Restaurar contenido no guardado?
+                <span className="font-bold text-blue-400">{t.draftDetected}</span> {t.restoreDraft}
             </p>
             <div className="flex items-center gap-3 flex-shrink-0">
                 <button
@@ -57,7 +61,7 @@ const AutoSaveNotification: React.FC<AutoSaveNotificationProps> = ({ onRestore, 
                     className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors text-xs shadow-lg shadow-blue-900/20"
                 >
                     <RefreshIcon />
-                    Restaurar
+                    {t.restoreBtn}
                 </button>
                 <button
                     onClick={onDismiss}
@@ -91,6 +95,14 @@ const App: React.FC = () => {
     const [isCopied, setIsCopied] = useState<boolean>(false);
     const [listeningField, setListeningField] = useState<string | null>(null);
     const [micSupported, setMicSupported] = useState<boolean>(false);
+    const [language, setLanguage] = useState<Language>('es');
+
+    // Suggestions State
+    const [suggestionModalOpen, setSuggestionModalOpen] = useState(false);
+    const [isGeneratingSuggestion, setIsGeneratingSuggestion] = useState(false);
+    const [suggestions, setSuggestions] = useState<string[]>([]);
+    const [activeSuggestionField, setActiveSuggestionField] = useState<'responseGuidelines' | 'stepByStep' | 'notes' | null>(null);
+
     const recognitionRef = useRef<any | null>(null);
     const formRef = useRef<HTMLDivElement>(null);
     
@@ -108,6 +120,12 @@ const App: React.FC = () => {
     promptDataRef.current = promptData;
     const variablesRef = useRef(variables);
     variablesRef.current = variables;
+    
+    const t = translations[language];
+
+    const toggleLanguage = () => {
+        setLanguage(prev => prev === 'es' ? 'en' : 'es');
+    };
 
     
     // Auto-save logic
@@ -203,7 +221,7 @@ const App: React.FC = () => {
             setMicSupported(true);
             const recognition = new SpeechRecognition();
             recognition.continuous = true;
-            recognition.lang = 'es-ES';
+            recognition.lang = language === 'es' ? 'es-ES' : 'en-US';
             recognition.interimResults = true;
 
             recognition.onresult = (event: any) => {
@@ -245,7 +263,7 @@ const App: React.FC = () => {
         } else {
             setMicSupported(false);
         }
-    }, [listeningField]);
+    }, [listeningField, language]);
 
 
     const handleInputChange = useCallback((field: keyof VoiceAgentPromptData, value: string) => {
@@ -280,7 +298,7 @@ const App: React.FC = () => {
         const minLength = 3;
 
         if (trimmedNiche.length < minLength) {
-            setError(`El campo 'Nicho del Prompt' es obligatorio y debe tener al menos ${minLength} caracteres.`);
+            setError(`El campo '${t.nicheLabel}' es obligatorio y debe tener al menos ${minLength} caracteres.`);
             return;
         }
         
@@ -326,17 +344,17 @@ const App: React.FC = () => {
         const minLength = 3;
 
         if (trimmedRole.length < minLength) {
-            setError(`El campo 'Rol del Agente' es obligatorio y debe tener al menos ${minLength} caracteres.`);
+            setError(`El campo '${t.roleLabel}' es obligatorio y debe tener al menos ${minLength} caracteres.`);
             return;
         }
 
         if (trimmedTask.length < minLength) {
-            setError(`El campo 'Tarea Principal' es obligatorio y debe tener al menos ${minLength} caracteres.`);
+            setError(`El campo '${t.taskLabel}' es obligatorio y debe tener al menos ${minLength} caracteres.`);
             return;
         }
         
         if (trimmedNiche.length < minLength) {
-            setError(`El campo 'Nicho del Prompt' es obligatorio y debe tener al menos ${minLength} caracteres.`);
+            setError(`El campo '${t.nicheLabel}' es obligatorio y debe tener al menos ${minLength} caracteres.`);
             return;
         }
 
@@ -518,30 +536,83 @@ const App: React.FC = () => {
         setTimeout(() => setToastMessage(''), 2000);
     };
 
+    // --- Auto Generation Handlers ---
+    const handleAutoGenerate = async (field: 'responseGuidelines' | 'stepByStep' | 'notes') => {
+        // Prerequisite check
+        if (!promptData.agentRole || !promptData.task) {
+            setError(t.errorPrerequisites);
+            return;
+        }
+        setError(null);
+
+        setActiveSuggestionField(field);
+        setSuggestionModalOpen(true);
+        setIsGeneratingSuggestion(true);
+        setSuggestions([]);
+
+        try {
+            const result = await generateSuggestions(promptData, field, language);
+            setSuggestions(result);
+        } catch (e) {
+            console.error(e);
+            setError("Error generating suggestions. Please try again.");
+            setSuggestionModalOpen(false);
+        } finally {
+            setIsGeneratingSuggestion(false);
+        }
+    };
+
+    const handleSelectSuggestion = (value: string) => {
+        if (activeSuggestionField) {
+            handleInputChange(activeSuggestionField, value);
+            setSuggestionModalOpen(false);
+            setToastMessage('Contenido insertado correctamente');
+            setTimeout(() => setToastMessage(''), 2000);
+        }
+    };
 
     
     return (
         <div className="min-h-screen bg-deep-900 text-gray-100 flex flex-col items-center p-4 sm:p-6 lg:p-8 font-sans">
             <Toast message={toastMessage} show={!!toastMessage} />
-            <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} link={shareableLink} />
+            <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} link={shareableLink} lang={language} />
+            <SuggestionModal 
+                isOpen={suggestionModalOpen} 
+                onClose={() => setSuggestionModalOpen(false)} 
+                onSelect={handleSelectSuggestion}
+                loading={isGeneratingSuggestion}
+                suggestions={suggestions}
+                lang={language}
+            />
+
+            {/* Language Toggle */}
+            <div className="absolute top-4 right-4 z-50 no-print">
+                <button 
+                    onClick={toggleLanguage}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-deep-800/80 border border-gray-700 rounded-lg text-xs font-semibold text-gray-300 hover:text-cyan-400 hover:border-cyan-500/50 transition-all shadow-lg backdrop-blur-sm"
+                >
+                    <LanguageIcon />
+                    <span>{language === 'es' ? 'ESPAÑOL' : 'ENGLISH'}</span>
+                </button>
+            </div>
 
             <div className="w-full max-w-5xl mx-auto mb-20">
                 <header className="relative text-center mb-12 no-print">
                     <div className="flex justify-center items-center gap-3 sm:gap-4 mb-2">
                         <Logo />
                         <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 tracking-tight">
-                            DeepCode
+                            VoxWizard IA
                         </h1>
                     </div>
                     <p className="text-cyan-400 font-mono text-sm uppercase tracking-widest">
-                        Open-Source Code Agent Generator
+                        {t.subtitle}
                     </p>
                     <p className="mt-4 text-lg text-gray-400 max-w-2xl mx-auto">
-                        Diseña prompts efectivos para agentes de voz con inteligencia artificial avanzada.
+                        {t.description}
                     </p>
                 </header>
 
-                <PromptExamples onSelectExample={handleSelectExample} />
+                <PromptExamples onSelectExample={handleSelectExample} lang={language} />
 
                 <main ref={formRef} className="bg-deep-800/80 backdrop-blur-md p-6 sm:p-8 rounded-2xl border border-cyan-900/30 shadow-2xl mt-12 no-print relative overflow-hidden">
                     {/* Decorative top border glow */}
@@ -551,6 +622,7 @@ const App: React.FC = () => {
                         <AutoSaveNotification
                             onRestore={handleRestoreAutoSave}
                             onDismiss={handleDismissAutoSave}
+                            lang={language}
                         />
                     )}
                     
@@ -558,7 +630,7 @@ const App: React.FC = () => {
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-bold text-cyan-400 uppercase tracking-wide flex items-center gap-2">
                                 <span className="w-2 h-2 bg-cyan-400 rounded-full shadow-[0_0_8px_rgba(34,211,238,0.8)]"></span>
-                                Configuración del Agente
+                                {t.configTitle}
                             </h2>
                             <button
                                 type="button"
@@ -566,17 +638,17 @@ const App: React.FC = () => {
                                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-red-900/20 hover:bg-red-900/40 text-red-400 border border-red-900/50 rounded-md transition-colors"
                             >
                                 <TrashIcon />
-                                Limpiar
+                                {t.clearBtn}
                             </button>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="md:col-span-2">
                                 <InputField
-                                    label="Rol del Agente"
+                                    label={t.roleLabel}
                                     value={promptData.agentRole}
                                     onChange={(e) => handleInputChange('agentRole', e.target.value)}
-                                    placeholder="Ej: Eres Maria, una asistente virtual amigable..."
-                                    helpText="Describe quién es el agente y su propósito principal. (Obligatorio)"
+                                    placeholder={t.rolePlaceholder}
+                                    helpText={t.roleHelp}
                                     required
                                     onMicClick={() => handleMicClick('agentRole')}
                                     isListening={listeningField === 'agentRole'}
@@ -585,11 +657,11 @@ const App: React.FC = () => {
                             </div>
                             <div className="md:col-span-2">
                                 <InputField
-                                    label="Tarea Principal"
+                                    label={t.taskLabel}
                                     value={promptData.task}
                                     onChange={(e) => handleInputChange('task', e.target.value)}
-                                    placeholder="Ej: Proveer información de servicios y cualificar clientes."
-                                    helpText="El objetivo clave que el agente debe cumplir. (Obligatorio)"
+                                    placeholder={t.taskPlaceholder}
+                                    helpText={t.taskHelp}
                                     required
                                     onMicClick={() => handleMicClick('task')}
                                     isListening={listeningField === 'task'}
@@ -597,32 +669,32 @@ const App: React.FC = () => {
                                 />
                             </div>
                             <InputField
-                                label="Personalidad"
+                                label={t.personalityLabel}
                                 value={promptData.personality}
                                 onChange={(e) => handleInputChange('personality', e.target.value)}
-                                placeholder="Ej: Cercana, espontánea, servicial..."
-                                helpText="Define el estilo y la forma de hablar del agente."
+                                placeholder={t.personalityPlaceholder}
+                                helpText={t.personalityHelp}
                                 onMicClick={() => handleMicClick('personality')}
                                 isListening={listeningField === 'personality'}
                                 micSupported={micSupported}
                             />
                              <InputField
-                                label="Tono y Lenguaje"
+                                label={t.toneLabel}
                                 value={promptData.toneAndLanguage}
                                 onChange={(e) => handleInputChange('toneAndLanguage', e.target.value)}
-                                placeholder="Ej: Formal, usa 'usted', lenguaje técnico..."
-                                helpText="Especifica el tono y las reglas del lenguaje a usar."
+                                placeholder={t.tonePlaceholder}
+                                helpText={t.toneHelp}
                                 onMicClick={() => handleMicClick('toneAndLanguage')}
                                 isListening={listeningField === 'toneAndLanguage'}
                                 micSupported={micSupported}
                             />
                             <div className="md:col-span-2">
                                 <InputField
-                                    label="Contexto (Base de Conocimiento)"
+                                    label={t.contextLabel}
                                     value={promptData.context}
                                     onChange={(e) => handleInputChange('context', e.target.value)}
-                                    placeholder="Ej: Servicios: Corte (30€), Tinte (50€). Horario: L-V 10-20h..."
-                                    helpText="Toda la información que el agente necesita para responder preguntas."
+                                    placeholder={t.contextPlaceholder}
+                                    helpText={t.contextHelp}
                                     isTextarea
                                     onMicClick={() => handleMicClick('context')}
                                     isListening={listeningField === 'context'}
@@ -630,47 +702,50 @@ const App: React.FC = () => {
                                 />
                             </div>
                             <InputField
-                                label="Directrices de Respuesta"
+                                label={t.guidelinesLabel}
                                 value={promptData.responseGuidelines}
                                 onChange={(e) => handleInputChange('responseGuidelines', e.target.value)}
-                                placeholder="Ej: Sé siempre amable. Usa frases cortas..."
-                                helpText="Reglas sobre cómo deben ser las respuestas del agente."
+                                placeholder={t.guidelinesPlaceholder}
+                                helpText={t.guidelinesHelp}
                                 isTextarea
                                 onMicClick={() => handleMicClick('responseGuidelines')}
                                 isListening={listeningField === 'responseGuidelines'}
                                 micSupported={micSupported}
+                                onAutoGenerate={() => handleAutoGenerate('responseGuidelines')}
                             />
                             <InputField
-                                label="Flujo de Conversación (Paso a Paso)"
+                                label={t.stepByStepLabel}
                                 value={promptData.stepByStep}
                                 onChange={(e) => handleInputChange('stepByStep', e.target.value)}
-                                placeholder="Ej: 1. Saludar. 2. Preguntar nombre. 3. Pedir email..."
-                                helpText="Define un guion o los pasos que el agente debe seguir."
+                                placeholder={t.stepByStepPlaceholder}
+                                helpText={t.stepByStepHelp}
                                 isTextarea
                                 onMicClick={() => handleMicClick('stepByStep')}
                                 isListening={listeningField === 'stepByStep'}
                                 micSupported={micSupported}
+                                onAutoGenerate={() => handleAutoGenerate('stepByStep')}
                             />
                             <div className="md:col-span-2">
                                 <InputField
-                                    label="Notas Adicionales"
+                                    label={t.notesLabel}
                                     value={promptData.notes}
                                     onChange={(e) => handleInputChange('notes', e.target.value)}
-                                    placeholder="Ej: Evitar temas no relacionados..."
-                                    helpText="Reglas específicas o manejo de casos excepcionales."
+                                    placeholder={t.notesPlaceholder}
+                                    helpText={t.notesHelp}
                                     onMicClick={() => handleMicClick('notes')}
                                     isListening={listeningField === 'notes'}
                                     micSupported={micSupported}
+                                    onAutoGenerate={() => handleAutoGenerate('notes')}
                                 />
                             </div>
 
                              <div className="md:col-span-2 pt-6 border-t border-cyan-900/30">
                                 <InputField
-                                    label="Nicho del Prompt"
+                                    label={t.nicheLabel}
                                     value={niche}
                                     onChange={(e) => setNiche(e.target.value)}
-                                    placeholder="Ej: Peluquería, Inmobiliaria, Restaurante..."
-                                    helpText="Categoriza este prompt para encontrarlo fácilmente. (Obligatorio)"
+                                    placeholder={t.nichePlaceholder}
+                                    helpText={t.nicheHelp}
                                     required
                                     onMicClick={() => handleMicClick('niche')}
                                     isListening={listeningField === 'niche'}
@@ -687,6 +762,7 @@ const App: React.FC = () => {
                                     onMicClick={handleMicClick}
                                     listeningField={listeningField}
                                     micSupported={micSupported}
+                                    lang={language}
                                 />
                             </div>
 
@@ -699,7 +775,7 @@ const App: React.FC = () => {
                                 className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold rounded-lg shadow-lg shadow-emerald-900/30 transition-all duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
                             >
                                 {isLoading ? <Spinner /> : <SparklesIcon />}
-                                {isLoading ? 'Procesando...' : 'Full workflow with indexing enabled'}
+                                {isLoading ? t.processingBtn : t.processBtn}
                             </button>
                              {generatedPrompt && !isLoading && (
                                 <button
@@ -709,7 +785,7 @@ const App: React.FC = () => {
                                     aria-label="Guardar el prompt actual en el historial"
                                 >
                                     <PlusIcon />
-                                    Guardar en DB
+                                    {t.saveDbBtn}
                                 </button>
                             )}
                         </div>
@@ -719,10 +795,10 @@ const App: React.FC = () => {
                 {(isLoading || generatedPrompt) && (
                     <div id="generated-prompt-print-area" className="mt-10">
                          <div className="print-header-content hidden">
-                            <h2>System Prompt Optimizado</h2>
+                            <h2>{t.generatedTitle}</h2>
                         </div>
                         <h2 className="text-2xl font-bold text-center mb-4 text-cyan-400 no-print uppercase tracking-wide">
-                             System Prompt Generated
+                             {t.generatedTitle}
                         </h2>
                         <div className="relative bg-deep-900/80 p-6 rounded-xl border border-cyan-900/30 min-h-[150px] shadow-2xl">
                             {/* Header glow strip */}
@@ -731,20 +807,20 @@ const App: React.FC = () => {
                             {isLoading ? (
                                 <div className="flex flex-col items-center justify-center h-32 gap-4">
                                     <Spinner />
-                                    <div className="animate-pulse text-cyan-400 font-mono text-sm">AI Agent Processing...</div>
+                                    <div className="animate-pulse text-cyan-400 font-mono text-sm">{t.processingAgent}</div>
                                 </div>
                             ) : (
                                 <>
                                     <div className="absolute top-4 right-4 flex gap-2 no-print z-10">
                                         <IconButton
                                             onClick={handleOpenShareModal}
-                                            text="Share"
+                                            text={t.shareBtn}
                                             icon={<ShareIcon />}
                                             className="bg-deep-700 hover:bg-deep-700/80 text-gray-300 border border-gray-600/50"
                                         />
                                         <IconButton
                                             onClick={handleCopy}
-                                            text={isCopied ? 'Copied' : 'Copy'}
+                                            text={isCopied ? t.copiedBtn : t.copyBtn}
                                             icon={isCopied ? <CheckIcon /> : <CopyIcon />}
                                             className={isCopied ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-500/50' : 'bg-deep-700 hover:bg-deep-700/80 text-gray-300 border border-gray-600/50'}
                                         />
@@ -760,6 +836,7 @@ const App: React.FC = () => {
                                         onChange={setGeneratedPrompt}
                                         variables={variables}
                                         onVariableUpdate={handleVariableEditFromEditor}
+                                        lang={language}
                                     />
                                 </>
                             )}
@@ -772,6 +849,7 @@ const App: React.FC = () => {
                     history={history}
                     onSelect={handleSelectHistoryItem}
                     onDelete={handleDeleteHistoryItem}
+                    lang={language}
                 />
             </div>
         </div>

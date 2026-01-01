@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { MicrophoneIcon } from './Icons';
+import { MicrophoneIcon, SparklesIcon } from './Icons';
 
 interface InputFieldProps {
     label: string;
@@ -13,6 +13,7 @@ interface InputFieldProps {
     onMicClick?: () => void;
     isListening?: boolean;
     micSupported?: boolean;
+    onAutoGenerate?: () => void; // New prop for the magic wand
 }
 
 const InputField: React.FC<InputFieldProps> = ({ 
@@ -26,6 +27,7 @@ const InputField: React.FC<InputFieldProps> = ({
     onMicClick,
     isListening = false,
     micSupported = false,
+    onAutoGenerate,
 }) => {
     // Generate a unique ID for the input to connect the label for accessibility
     const inputId = `input-${label.replace(/\s+/g, '-').toLowerCase()}`;
@@ -34,8 +36,9 @@ const InputField: React.FC<InputFieldProps> = ({
         block w-full rounded-lg border appearance-none focus:outline-none focus:ring-0 peer transition-colors duration-200 
         bg-[#0B0F19] border-gray-700 text-gray-200 focus:border-cyan-400 group-hover:border-gray-600
         shadow-inner shadow-black/50
-        ${micSupported ? "pr-10" : ""}
+        ${(micSupported || onAutoGenerate) ? "pr-20" : ""} 
     `;
+    // Increased padding-right to accommodate two buttons if needed
 
     return (
         <div className="flex flex-col gap-2">
@@ -75,16 +78,31 @@ const InputField: React.FC<InputFieldProps> = ({
                     {label} {required && <span className="text-red-400">*</span>}
                 </label>
 
-                {micSupported && (
-                    <button
-                        type="button"
-                        onClick={onMicClick}
-                        className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full transition-colors ${isListening ? 'text-cyan-400 bg-cyan-500/20 animate-pulse' : 'text-gray-500 hover:text-gray-300'}`}
-                        aria-label="Activar dictado por voz"
-                    >
-                        <MicrophoneIcon />
-                    </button>
-                )}
+                <div className="absolute right-3 top-3 flex items-center gap-1">
+                    {onAutoGenerate && (
+                        <button
+                            type="button"
+                            onClick={onAutoGenerate}
+                            className="p-1.5 rounded-full text-purple-400 hover:text-white hover:bg-purple-500/20 transition-colors duration-300"
+                            title="Autocompletar con IA"
+                            aria-label="Generar contenido con IA"
+                        >
+                            <SparklesIcon />
+                        </button>
+                    )}
+
+                    {micSupported && (
+                        <button
+                            type="button"
+                            onClick={onMicClick}
+                            className={`p-1.5 rounded-full transition-colors ${isListening ? 'text-cyan-400 bg-cyan-500/20 animate-pulse' : 'text-gray-500 hover:text-gray-300'}`}
+                            aria-label="Activar dictado por voz"
+                            title="Dictar por voz"
+                        >
+                            <MicrophoneIcon />
+                        </button>
+                    )}
+                </div>
             </div>
             <p className="text-xs text-gray-500 ml-1">{helpText}</p>
         </div>

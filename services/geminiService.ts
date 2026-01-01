@@ -1,14 +1,11 @@
+
 import { GoogleGenAI } from '@google/genai';
 import { VoiceAgentPromptData } from '../types';
 
 /**
  * Generates a refined system prompt using the Gemini API.
- * @param promptData - The user-provided data for the voice agent.
- * @returns A promise that resolves to a string containing the generated system prompt.
  */
-// FIX: The apiKey parameter has been removed to adhere to the guideline of exclusively using process.env.API_KEY.
 export const generatePerfectPrompt = async (promptData: VoiceAgentPromptData): Promise<string> => {
-    // FIX: Initialize GoogleGenAI with the API key from environment variables as per guidelines. The apiKey is assumed to be available.
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
     console.log("Generating prompt with Gemini API:", promptData);
@@ -62,43 +59,6 @@ Eres un experto en ingeniería de prompts para IA conversacional de voz. Tu misi
 
 ---
 
-**EJEMPLO DE APLICACIÓN:**
-
-*   **DATOS DE ENTRADA DEL USUARIO:**
-    \`\`\`
-    ### ROL DEL AGENTE
-    Asistente de reservas para "Restaurante Fusión".
-    ### TAREA PRINCIPAL
-    Agendar reservas de mesa.
-    ### PERSONALIDAD
-    Amable, eficiente.
-    ### CONTEXTO
-    Horario: 13:00 a 22:00. No se reserva para más de 8 personas por teléfono.
-    ### PASO A PASO
-    1. Preguntar por número de comensales. 2. Preguntar fecha y hora. 3. Confirmar disponibilidad. 4. Pedir nombre.
-    \`\`\`
-
-*   **PROMPT GENERADO (SALIDA IDEAL):**
-    \`\`\`
-### IDENTIDAD Y COMPORTAMIENTO
-Eres un asistente virtual del "Restaurante Fusión". Tu comportamiento es siempre amable y altamente eficiente, enfocado en facilitar el proceso de reserva de forma rápida y agradable para el cliente.
-
-### OBJETIVO PRINCIPAL
-Tu única misión es gestionar y confirmar las reservas de mesa solicitadas por los clientes a través de la llamada.
-
-### BASE DE CONOCIMIENTO
-- Horario de atención para reservas: 13:00 a 22:00.
-- Límite de comensales por reserva telefónica: 8 personas. Para grupos más grandes, deben visitar la web.
-
-### PROTOCOLO DE CONVERSACIÓN
-1.  **Inicia la cualificación:** Pregunta primero por el número de personas para la reserva.
-2.  **Verifica el límite:** Si son más de 8, informa amablemente sobre la política y dirige al usuario a la web.
-3.  **Recopila datos:** Pregunta por la fecha y la hora deseadas.
-4.  **Confirma la reserva:** Una vez verificada la disponibilidad, solicita un nombre para finalizar la reserva.
-    \`\`\`
-
----
-
 **DATOS BRUTOS DEL USUARIO A PROCESAR:**
 
 ${filledSections}
@@ -123,28 +83,73 @@ ${filledSections}
         return text;
     } catch (error) {
         console.error("Error al llamar a la API de Gemini:", error);
-
-        // --- Validación de API Key (Preparado para Producción) ---
-        // Cambia a 'true' para activar la validación estricta de la API Key en producción.
-        const IS_IN_PRODUCTION = false;
-
-        if (IS_IN_PRODUCTION && error instanceof Error) {
-            const errorMessage = error.message.toLowerCase();
-            // Detecta errores comunes relacionados con la API Key para dar un feedback más claro.
-            if (errorMessage.includes('api key not valid') || 
-                errorMessage.includes('permission denied') || 
-                errorMessage.includes('api_key_invalid') ||
-                errorMessage.includes('api key is invalid')) {
-                throw new Error('Error de Autenticación: La API Key configurada no es válida, ha caducado o no tiene los permisos necesarios. Por favor, contacta al administrador del sistema.');
-            }
-        }
-        
-        // --- Mensaje de Error Genérico (Fase Beta o error no relacionado con la Key) ---
-        if (error instanceof Error) {
-            // Mensaje por defecto mientras la validación estricta no está activa.
-            throw new Error(`Ocurrió un error al generar el prompt con IA. Inténtalo de nuevo más tarde.`);
-        }
-        
-        throw new Error("Ocurrió un error desconocido al generar el prompt con IA.");
+        throw new Error("Ocurrió un error al generar el prompt con IA.");
     }
 };
+
+/**
+ * Generates suggestions for specific fields based on existing data.
+ */
+export const generateSuggestions = async (
+    promptData: Partial<VoiceAgentPromptData>,
+    targetField: 'responseGuidelines' | 'stepByStep' | 'notes',
+    language: 'es' | 'en'
+): Promise<string[]> => {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    
+    // Determine context string
+    const contextStr = `
+    ROLE: ${promptData.agentRole || 'Unknown'}
+    TASK: ${promptData.task || 'Unknown'}
+    PERSONALITY: ${promptData.personality || 'Unknown'}
+    CONTEXT: ${promptData.context || 'Unknown'}
+    `;
+
+    let fieldDescription = "";
+    if (targetField === 'responseGuidelines') {
+        fieldDescription = "Response Guidelines (rules on how to speak, what to say/avoid, length of answers)";
+    } else if (targetField === 'stepByStep') {
+        fieldDescription = "Step-by-Step Conversation Flow (a numbered list of logical steps for the call)";
+    } else if (targetField === 'notes') {
+        fieldDescription = "Additional Notes/Exceptions (handling errors, edge cases, strict prohibitions)";
+    }
+
+    const prompt = `
+    You are an AI Voice Agent Architect. 
+    Based on the following agent details:
+    ${contextStr}
+
+    Please generate 3 DISTINCT, HIGH-QUALITY options for the field: "${fieldDescription}".
+    
+    Output requirements:
+    1. The output MUST be a valid JSON array of strings. Example: ["Option 1 content", "Option 2 content", "Option 3 content"].
+    2. The content must be in ${language === 'es' ? 'SPANISH' : 'ENGLISH'}.
+    3. Option 1 should be concise and direct.
+    4. Option 2 should be detailed and comprehensive.
+    5. Option 3 should be creative or alternative approach.
+    6. Do NOT return markdown formatting (no \`\`\`json). Just the raw JSON string.
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: 'application/json'
+            }
+        });
+
+        const text = response.text;
+        if (!text) throw new Error("No suggestion generated");
+
+        const parsed = JSON.parse(text);
+        if (Array.isArray(parsed)) {
+            return parsed.map(s => String(s));
+        }
+        return [];
+
+    } catch (error) {
+        console.error("Error generating suggestions:", error);
+        throw new Error("Failed to generate suggestions");
+    }
+}
