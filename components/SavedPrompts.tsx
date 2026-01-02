@@ -61,18 +61,19 @@ const SavedPrompts: React.FC<SavedPromptsProps> = ({ history, onSelect, onDelete
     };
 
     const handlePrint = () => {
-        const printArea = document.getElementById('history-print-area');
-        if (!printArea) return;
+        const content = document.getElementById('history-print-area');
+        if (!content) return;
 
-        printArea.classList.add('print-section');
+        let printContainer = document.getElementById('print-container');
+        if (!printContainer) {
+            printContainer = document.createElement('div');
+            printContainer.id = 'print-container';
+            document.body.appendChild(printContainer);
+        }
 
-        const afterPrint = () => {
-            printArea.classList.remove('print-section');
-            window.removeEventListener('afterprint', afterPrint);
-        };
-        window.addEventListener('afterprint', afterPrint);
-
+        printContainer.innerHTML = content.innerHTML;
         window.print();
+        printContainer.innerHTML = '';
     };
 
     const renderDetail = (label: string, value: string | undefined | null, isPreWrap = false) => {

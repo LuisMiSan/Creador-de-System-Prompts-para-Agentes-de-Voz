@@ -124,102 +124,98 @@
         border-radius: 0 4px 4px 0;
       }
 
+      /* --- ROBUST PRINT STRATEGY --- */
       @media print {
-        body * {
-          visibility: hidden;
+        /* Hide everything by default */
+        body > * {
+          display: none !important;
         }
-        .print-section, .print-section * {
-          visibility: visible;
-        }
-        .print-section {
+
+        /* Show only the dedicated print container */
+        #print-container {
+          display: block !important;
           position: absolute;
-          left: 0;
           top: 0;
+          left: 0;
           width: 100%;
           margin: 0;
           padding: 20px;
-        }
-        .print-header-content {
-            display: block !important;
-            text-align: center;
-            margin-bottom: 1rem;
-        }
-        .print-header-content h2 {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: black;
-        }
-        .no-print {
-            display: none !important;
-        }
-        body {
           background-color: white !important;
           color: black !important;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        thead {
-            background-color: #f2f2f2 !important;
-            -webkit-print-color-adjust: exact;
-            color-adjust: exact;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            color: black !important;
-        }
-        th {
-            color: black !important;
-            text-transform: none;
-        }
-        tr {
-            page-break-inside: avoid;
-            background-color: white !important;
-        }
-        .line-clamp-1, .line-clamp-2 {
-            -webkit-line-clamp: unset !important;
-            display: block !important;
-        }
-        
-        .prose-styles, .prose-styles * {
-            color: black !important;
-            background: transparent !important;
-        }
-        .prose-styles {
-            font-family: Georgia, serif !important;
-            font-size: 11pt !important;
-        }
-        .prose-styles h3 {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
-            border-bottom: 2px solid #ccc !important;
-            color: black !important;
-        }
-        .prose-styles code {
-            font-family: 'Courier New', Courier, monospace !important;
-            background-color: #f0f0f0 !important;
-            border: 1px solid #ddd !important;
-            padding: 1px 3px !important;
-            -webkit-print-color-adjust: exact;
-            color-adjust: exact;
-            color: black !important;
-        }
-        .prose-styles pre {
-            background-color: #f8f8f8 !important;
-            border: 1px solid #ccc !important;
-            padding: 10px !important;
-            white-space: pre-wrap !important;
-            word-wrap: break-word !important;
-            -webkit-print-color-adjust: exact;
-            color-adjust: exact;
+          font-family: Georgia, 'Times New Roman', serif;
+          font-size: 11pt;
+          line-height: 1.5;
+          z-index: 99999;
         }
 
-        .prompt-content-for-print {
-            background-color: #ffffff !important;
-            border: 1px solid #ccc !important;
-            padding: 15px !important;
-            border-radius: 4px !important;
+        /* Ensure content inside print container is visible and styled for print */
+        #print-container * {
+          visibility: visible !important;
+          color: black !important;
+          background-color: transparent !important;
+          box-shadow: none !important;
+          text-shadow: none !important;
+        }
+
+        /* Hide elements explicitly marked as no-print */
+        #print-container .no-print {
+          display: none !important;
+        }
+
+        /* Specific Markdown Styling for Print */
+        #print-container h1, #print-container h2 {
+          border-bottom: 2px solid #000 !important;
+          padding-bottom: 5px !important;
+          margin-bottom: 15px !important;
+          margin-top: 20px !important;
+        }
+        
+        #print-container h3 {
+          border-bottom: 1px solid #ccc !important;
+          margin-top: 15px !important;
+          font-weight: bold !important;
+        }
+
+        #print-container a {
+          text-decoration: underline !important;
+          color: #000 !important;
+        }
+
+        #print-container code {
+          border: 1px solid #ddd !important;
+          background-color: #f5f5f5 !important;
+          padding: 2px 4px !important;
+          border-radius: 3px !important;
+          font-family: 'Courier New', Courier, monospace !important;
+        }
+
+        #print-container pre {
+          background-color: #f5f5f5 !important;
+          border: 1px solid #ddd !important;
+          padding: 10px !important;
+          white-space: pre-wrap !important;
+        }
+
+        #print-container blockquote {
+          border-left: 3px solid #000 !important;
+          padding-left: 10px !important;
+          font-style: italic !important;
+        }
+        
+        /* Table Styling for Print (SavedPrompts) */
+        #print-container table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            margin-top: 20px !important;
+        }
+        #print-container th, #print-container td {
+            border: 1px solid #ddd !important;
+            padding: 8px !important;
+            text-align: left !important;
+        }
+        #print-container th {
+            background-color: #eee !important;
+            font-weight: bold !important;
         }
       }
     </style>

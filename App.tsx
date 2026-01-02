@@ -7,7 +7,7 @@ import Spinner from './components/Spinner';
 import IconButton from './components/IconButton';
 import PromptExamples from './components/PromptExamples';
 import SavedPrompts from './components/SavedPrompts';
-import { CopyIcon, CheckIcon, SparklesIcon, TrashIcon, CloseIcon, RefreshIcon, PlusIcon, PdfIcon, ShareIcon, LanguageIcon } from './components/Icons';
+import { CopyIcon, CheckIcon, SparklesIcon, TrashIcon, CloseIcon, RefreshIcon, PlusIcon, PdfIcon, ShareIcon, LanguageIcon, DownloadIcon } from './components/Icons';
 import Logo from './components/Logo';
 import DynamicVariables from './components/DynamicVariables';
 import MarkdownEditor from './components/MarkdownEditor';
@@ -159,7 +159,8 @@ const App: React.FC = () => {
                 if (hash.startsWith('#prompt=')) {
                     try {
                         const encodedData = hash.substring('#prompt='.length);
-                        const decodedData = atob(encodedData);
+                        // Fix for Unicode decoding
+                        const decodedData = decodeURIComponent(escape(atob(encodedData)));
                         const sharedData: Partial<ShareablePromptData> = JSON.parse(decodedData);
                         
                         const initialPromptData = {
@@ -378,23 +379,15 @@ const App: React.FC = () => {
         try {
             const perfectPrompt = await generatePerfectPrompt(substitutedPromptData);
             setGeneratedPrompt(perfectPrompt);
-            const newHistoryItem: PromptHistoryItem = {
-                id: new Date().toISOString(),
-                promptData,
-                generatedPrompt: perfectPrompt,
-                timestamp: Date.now(),
-                niche: trimmedNiche,
-                variables,
-            };
-            setHistory(prevHistory => [newHistoryItem, ...prevHistory]);
-            setToastMessage('Prompt guardado en la base de datos');
-            setTimeout(() => setToastMessage(''), 3000);
+            
+            // NOTE: Auto-save logic removed. The user must manually click "Save to DB".
+            // This prevents duplication conflicts when clicking the save button immediately after generation.
 
             // Clear auto-saved data on successful submission
             localStorage.removeItem('autoSavedPrompt');
             setAutoSavedData(null);
-            setNiche('');
-
+            // We do NOT clear niche here anymore to allow the user to save with the current niche
+            
         } catch (err) {
             const errorMessage = (err as Error).message;
             setError(errorMessage);
@@ -412,19 +405,48 @@ const App: React.FC = () => {
         }
     };
 
-    const handleExportPdf = () => {
-        const printArea = document.getElementById('generated-prompt-print-area');
-        if (!printArea) return;
-
-        printArea.classList.add('print-section');
-
-        const afterPrint = () => {
-            printArea.classList.remove('print-section');
-            window.removeEventListener('afterprint', afterPrint);
-        };
-        window.addEventListener('afterprint', afterPrint);
+    const handleDownloadMarkdown = () => {
+        if (!generatedPrompt) return;
         
+        try {
+            const blob = new Blob([generatedPrompt], { type: 'text/markdown;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `prompt-${(niche || 'agent').replace(/\s+/g, '-').toLowerCase()}.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            setToastMessage('Descargando archivo Markdown...');
+            setTimeout(() => setToastMessage(''), 2000);
+        } catch (e) {
+            console.error("Download failed", e);
+            setError("Error al descargar el archivo.");
+        }
+    };
+
+    const handleExportPdf = () => {
+        const content = document.getElementById('generated-prompt-print-area');
+        if (!content) return;
+
+        // 1. Create or get print container
+        let printContainer = document.getElementById('print-container');
+        if (!printContainer) {
+            printContainer = document.createElement('div');
+            printContainer.id = 'print-container';
+            document.body.appendChild(printContainer);
+        }
+
+        // 2. Copy content
+        printContainer.innerHTML = content.innerHTML;
+
+        // 3. Print
         window.print();
+
+        // 4. Cleanup (optional, keeping it empty ensures next print starts fresh)
+        printContainer.innerHTML = '';
     };
 
     const handleOpenShareModal = () => {
@@ -438,7 +460,9 @@ const App: React.FC = () => {
                 variables,
             };
             const jsonString = JSON.stringify(shareData);
-            const encodedData = btoa(jsonString);
+            
+            // Fix for Unicode encoding: encode to UTF-8 then base64
+            const encodedData = btoa(unescape(encodeURIComponent(jsonString)));
             const url = `${window.location.href.split('#')[0]}#prompt=${encodedData}`;
 
             setShareableLink(url);
@@ -825,8 +849,14 @@ const App: React.FC = () => {
                                             className={isCopied ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-500/50' : 'bg-deep-700 hover:bg-deep-700/80 text-gray-300 border border-gray-600/50'}
                                         />
                                         <IconButton
+                                            onClick={handleDownloadMarkdown}
+                                            text="MD"
+                                            icon={<DownloadIcon />}
+                                            className="bg-deep-700 hover:bg-deep-700/80 text-gray-300 border border-gray-600/50"
+                                        />
+                                        <IconButton
                                             onClick={handleExportPdf}
-                                            text="PDF"
+                                            text="Guardar PDF"
                                             icon={<PdfIcon />}
                                             className="bg-deep-700 hover:bg-deep-700/80 text-gray-300 border border-gray-600/50"
                                         />
