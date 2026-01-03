@@ -31,7 +31,7 @@ interface ToastProps {
 const Toast: React.FC<ToastProps> = ({ message, show }) => {
     return (
         <div 
-            className={`fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-lg shadow-2xl bg-emerald-500/10 backdrop-blur-md border border-emerald-500/50 text-emerald-400 transition-all duration-300 ease-in-out
+            className={`fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-lg shadow-xl bg-white border border-emerald-500/20 text-emerald-600 transition-all duration-300 ease-in-out
             ${show ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10 pointer-events-none'}`}
         >
             <CheckIcon className="h-5 w-5" />
@@ -51,21 +51,21 @@ interface AutoSaveNotificationProps {
 const AutoSaveNotification: React.FC<AutoSaveNotificationProps> = ({ onRestore, onDismiss, lang }) => {
     const t = translations[lang];
     return (
-        <div className="bg-blue-900/30 border border-blue-500/30 p-4 rounded-xl mb-6 text-sm flex flex-col sm:flex-row items-center justify-between shadow-lg gap-4 backdrop-blur-sm">
-            <p className="text-blue-200 text-center sm:text-left">
-                <span className="font-bold text-blue-400">{t.draftDetected}</span> {t.restoreDraft}
+        <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl mb-6 text-sm flex flex-col sm:flex-row items-center justify-between shadow-sm gap-4">
+            <p className="text-blue-800 text-center sm:text-left">
+                <span className="font-bold text-blue-600">{t.draftDetected}</span> {t.restoreDraft}
             </p>
             <div className="flex items-center gap-3 flex-shrink-0">
                 <button
                     onClick={onRestore}
-                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors text-xs shadow-lg shadow-blue-900/20"
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors text-xs shadow-md"
                 >
                     <RefreshIcon />
                     {t.restoreBtn}
                 </button>
                 <button
                     onClick={onDismiss}
-                    className="p-1 text-gray-400 hover:text-white rounded-full hover:bg-white/10 transition-colors"
+                    className="p-1 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-200 transition-colors"
                     aria-label="Descartar borrador"
                 >
                     <CloseIcon />
@@ -151,7 +151,10 @@ const App: React.FC = () => {
                 // 1. ALWAYS Load history first to prevent data loss
                 const savedHistory = localStorage.getItem('promptHistory');
                 if (savedHistory) {
-                    setHistory(JSON.parse(savedHistory));
+                    const parsedHistory = JSON.parse(savedHistory);
+                    if (Array.isArray(parsedHistory)) {
+                        setHistory(parsedHistory);
+                    }
                 }
 
                 // 2. Check for shared prompt in URL
@@ -428,25 +431,110 @@ const App: React.FC = () => {
     };
 
     const handleExportPdf = () => {
-        const content = document.getElementById('generated-prompt-print-area');
-        if (!content) return;
-
-        // 1. Create or get print container
-        let printContainer = document.getElementById('print-container');
-        if (!printContainer) {
-            printContainer = document.createElement('div');
-            printContainer.id = 'print-container';
-            document.body.appendChild(printContainer);
+        // Find the content to print
+        const content = document.querySelector('#generated-prompt-print-area .prompt-content-for-print');
+        
+        if (!content) {
+            console.error("No print content found");
+            setToastMessage("Error: No hay contenido para imprimir");
+            return;
         }
 
-        // 2. Copy content
-        printContainer.innerHTML = content.innerHTML;
+        // Create a hidden iframe
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'fixed';
+        iframe.style.right = '0';
+        iframe.style.bottom = '0';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = '0';
+        document.body.appendChild(iframe);
 
-        // 3. Print
-        window.print();
+        const doc = iframe.contentWindow?.document;
+        if (!doc) return;
 
-        // 4. Cleanup (optional, keeping it empty ensures next print starts fresh)
-        printContainer.innerHTML = '';
+        // Build the full HTML document for the iframe
+        doc.open();
+        doc.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>System Prompt - ${niche || 'Generado'}</title>
+                <style>
+                    body {
+                        font-family: 'Helvetica', 'Arial', sans-serif;
+                        color: #000;
+                        background: #fff;
+                        padding: 40px;
+                        line-height: 1.6;
+                        font-size: 12pt;
+                    }
+                    h1 { 
+                        font-size: 24px; 
+                        border-bottom: 2px solid #000; 
+                        padding-bottom: 10px; 
+                        margin-bottom: 30px; 
+                    }
+                    h2 { 
+                        font-size: 18px; 
+                        color: #000;
+                        border-bottom: 1px solid #ccc;
+                        padding-bottom: 5px;
+                        margin-top: 25px;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                    }
+                    h3 { font-size: 16px; margin-top: 20px; font-weight: bold; }
+                    p { margin-bottom: 15px; }
+                    ul, ol { margin-left: 20px; margin-bottom: 15px; }
+                    li { margin-bottom: 5px; }
+                    pre {
+                        background: #f4f4f4;
+                        border: 1px solid #ddd;
+                        padding: 15px;
+                        border-radius: 5px;
+                        white-space: pre-wrap;
+                        font-family: 'Courier New', monospace;
+                        font-size: 11px;
+                        color: #000;
+                    }
+                    code {
+                        background: #f4f4f4;
+                        padding: 2px 5px;
+                        font-family: 'Courier New', monospace;
+                        font-size: 0.9em;
+                    }
+                    blockquote {
+                        border-left: 4px solid #333;
+                        margin: 0;
+                        padding-left: 15px;
+                        color: #444;
+                        font-style: italic;
+                    }
+                </style>
+            </head>
+            <body>
+                <h1>System Prompt: ${niche || 'Agente IA'}</h1>
+                ${content.innerHTML}
+            </body>
+            </html>
+        `);
+        doc.close();
+
+        // Wait for content to load then print
+        iframe.onload = () => {
+            // Small delay to ensure styles are applied
+            setTimeout(() => {
+                iframe.contentWindow?.focus();
+                iframe.contentWindow?.print();
+                
+                // Remove iframe after printing
+                // We use a longer timeout to ensure the print dialog has opened
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                }, 1000);
+            }, 500);
+        };
     };
 
     const handleOpenShareModal = () => {
@@ -597,7 +685,7 @@ const App: React.FC = () => {
 
     
     return (
-        <div className="min-h-screen bg-deep-900 text-gray-100 flex flex-col items-center p-4 sm:p-6 lg:p-8 font-sans">
+        <div className="min-h-screen bg-gray-50 text-gray-800 flex flex-col items-center p-4 sm:p-6 lg:p-8 font-sans">
             <Toast message={toastMessage} show={!!toastMessage} />
             <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} link={shareableLink} lang={language} />
             <SuggestionModal 
@@ -613,7 +701,7 @@ const App: React.FC = () => {
             <div className="absolute top-4 right-4 z-50 no-print">
                 <button 
                     onClick={toggleLanguage}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-deep-800/80 border border-gray-700 rounded-lg text-xs font-semibold text-gray-300 hover:text-cyan-400 hover:border-cyan-500/50 transition-all shadow-lg backdrop-blur-sm"
+                    className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-600 hover:text-blue-600 hover:border-blue-500/50 transition-all shadow-sm"
                 >
                     <LanguageIcon />
                     <span>{language === 'es' ? 'ESPAÑOL' : 'ENGLISH'}</span>
@@ -624,23 +712,23 @@ const App: React.FC = () => {
                 <header className="relative text-center mb-12 no-print">
                     <div className="flex justify-center items-center gap-3 sm:gap-4 mb-2">
                         <Logo />
-                        <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 tracking-tight">
+                        <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 tracking-tight">
                             VoxWizard IA
                         </h1>
                     </div>
-                    <p className="text-cyan-400 font-mono text-sm uppercase tracking-widest">
+                    <p className="text-blue-600 font-mono text-sm uppercase tracking-widest font-semibold">
                         {t.subtitle}
                     </p>
-                    <p className="mt-4 text-lg text-gray-400 max-w-2xl mx-auto">
+                    <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
                         {t.description}
                     </p>
                 </header>
 
                 <PromptExamples onSelectExample={handleSelectExample} lang={language} />
 
-                <main ref={formRef} className="bg-deep-800/80 backdrop-blur-md p-6 sm:p-8 rounded-2xl border border-cyan-900/30 shadow-2xl mt-12 no-print relative overflow-hidden">
-                    {/* Decorative top border glow */}
-                    <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-50"></div>
+                <main ref={formRef} className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-xl mt-12 no-print relative overflow-hidden">
+                    {/* Decorative top border */}
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
 
                     {autoSavedData && (
                         <AutoSaveNotification
@@ -651,15 +739,15 @@ const App: React.FC = () => {
                     )}
                     
                     <form onSubmit={handleSubmit}>
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold text-cyan-400 uppercase tracking-wide flex items-center gap-2">
-                                <span className="w-2 h-2 bg-cyan-400 rounded-full shadow-[0_0_8px_rgba(34,211,238,0.8)]"></span>
+                        <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+                            <h2 className="text-xl font-bold text-gray-800 uppercase tracking-wide flex items-center gap-2">
+                                <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
                                 {t.configTitle}
                             </h2>
                             <button
                                 type="button"
                                 onClick={handleClearForm}
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-red-900/20 hover:bg-red-900/40 text-red-400 border border-red-900/50 rounded-md transition-colors"
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-md transition-colors"
                             >
                                 <TrashIcon />
                                 {t.clearBtn}
@@ -763,7 +851,7 @@ const App: React.FC = () => {
                                 />
                             </div>
 
-                             <div className="md:col-span-2 pt-6 border-t border-cyan-900/30">
+                             <div className="md:col-span-2 pt-6 border-t border-gray-100">
                                 <InputField
                                     label={t.nicheLabel}
                                     value={niche}
@@ -777,7 +865,7 @@ const App: React.FC = () => {
                                 />
                             </div>
 
-                             <div className="md:col-span-2 pt-6 border-t border-cyan-900/30">
+                             <div className="md:col-span-2 pt-6 border-t border-gray-100">
                                 <DynamicVariables 
                                     variables={variables}
                                     onAdd={handleAddVariable}
@@ -791,12 +879,12 @@ const App: React.FC = () => {
                             </div>
 
                         </div>
-                        {error && <p className="text-red-400 text-center mt-4 bg-red-900/20 p-2 rounded border border-red-900/50">{error}</p>}
+                        {error && <p className="text-red-500 text-center mt-4 bg-red-50 p-2 rounded border border-red-200">{error}</p>}
                         <div className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold rounded-lg shadow-lg shadow-emerald-900/30 transition-all duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
+                                className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-lg shadow-lg shadow-blue-500/20 transition-all duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
                             >
                                 {isLoading ? <Spinner /> : <SparklesIcon />}
                                 {isLoading ? t.processingBtn : t.processBtn}
@@ -805,7 +893,7 @@ const App: React.FC = () => {
                                 <button
                                     type="button"
                                     onClick={handleSaveToHistory}
-                                    className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 bg-cyan-900/30 hover:bg-cyan-800/50 border border-cyan-700 text-cyan-300 font-semibold rounded-lg shadow-md transition-colors duration-200"
+                                    className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm transition-colors duration-200"
                                     aria-label="Guardar el prompt actual en el historial"
                                 >
                                     <PlusIcon />
@@ -821,17 +909,19 @@ const App: React.FC = () => {
                          <div className="print-header-content hidden">
                             <h2>{t.generatedTitle}</h2>
                         </div>
-                        <h2 className="text-2xl font-bold text-center mb-4 text-cyan-400 no-print uppercase tracking-wide">
+                        <h2 className="text-2xl font-bold text-center mb-4 text-blue-600 no-print uppercase tracking-wide">
                              {t.generatedTitle}
                         </h2>
-                        <div className="relative bg-deep-900/80 p-6 rounded-xl border border-cyan-900/30 min-h-[150px] shadow-2xl">
-                            {/* Header glow strip */}
-                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 via-purple-500 to-cyan-500"></div>
+                        <div className="relative bg-white p-6 rounded-xl border border-gray-200 min-h-[150px] shadow-xl">
+                            {/* Header color strip */}
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
                             
                             {isLoading ? (
                                 <div className="flex flex-col items-center justify-center h-32 gap-4">
-                                    <Spinner />
-                                    <div className="animate-pulse text-cyan-400 font-mono text-sm">{t.processingAgent}</div>
+                                    <div className="text-blue-600">
+                                        <Spinner />
+                                    </div>
+                                    <div className="animate-pulse text-blue-500 font-mono text-sm">{t.processingAgent}</div>
                                 </div>
                             ) : (
                                 <>
@@ -840,25 +930,25 @@ const App: React.FC = () => {
                                             onClick={handleOpenShareModal}
                                             text={t.shareBtn}
                                             icon={<ShareIcon />}
-                                            className="bg-deep-700 hover:bg-deep-700/80 text-gray-300 border border-gray-600/50"
+                                            className="bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300"
                                         />
                                         <IconButton
                                             onClick={handleCopy}
                                             text={isCopied ? t.copiedBtn : t.copyBtn}
                                             icon={isCopied ? <CheckIcon /> : <CopyIcon />}
-                                            className={isCopied ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-500/50' : 'bg-deep-700 hover:bg-deep-700/80 text-gray-300 border border-gray-600/50'}
+                                            className={isCopied ? 'bg-green-100 text-green-700 border border-green-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300'}
                                         />
                                         <IconButton
                                             onClick={handleDownloadMarkdown}
                                             text="MD"
                                             icon={<DownloadIcon />}
-                                            className="bg-deep-700 hover:bg-deep-700/80 text-gray-300 border border-gray-600/50"
+                                            className="bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300"
                                         />
                                         <IconButton
                                             onClick={handleExportPdf}
                                             text="Guardar PDF"
                                             icon={<PdfIcon />}
-                                            className="bg-deep-700 hover:bg-deep-700/80 text-gray-300 border border-gray-600/50"
+                                            className="bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300"
                                         />
                                     </div>
                                     <MarkdownEditor 

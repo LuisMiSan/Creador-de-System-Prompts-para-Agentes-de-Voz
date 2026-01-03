@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { DynamicVariable } from '../types';
 import { PlusIcon, TrashIcon, MicrophoneIcon } from './Icons';
@@ -37,9 +38,9 @@ const DynamicVariables: React.FC<DynamicVariablesProps> = ({ variables, onAdd, o
     return (
         <div className="flex flex-col gap-2">
             <div>
-                <label className="font-semibold text-gray-300">Variables Dinámicas</label>
-                <p className="text-xs text-gray-400">
-                    Define variables para reutilizar este prompt. Úsalas en los campos de arriba con la sintaxis <code className="bg-gray-900/50 text-orange-300 px-1 py-0.5 rounded-sm text-[11px]">{`{{nombre_variable}}`}</code>.
+                <label className="font-semibold text-gray-800">Variables Dinámicas</label>
+                <p className="text-xs text-gray-500">
+                    Define variables para reutilizar este prompt. Úsalas en los campos de arriba con la sintaxis <code className="bg-gray-100 text-indigo-600 px-1 py-0.5 rounded-sm text-[11px] border border-gray-200">{`{{nombre_variable}}`}</code>.
                 </p>
             </div>
             
@@ -50,7 +51,7 @@ const DynamicVariables: React.FC<DynamicVariablesProps> = ({ variables, onAdd, o
                     const showCustomInput = customEntryId === variable.id || isCustom;
 
                     return (
-                        <div key={variable.id} className="flex items-center gap-2 p-3 bg-gray-900/50 rounded-lg border border-gray-700/50">
+                        <div key={variable.id} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
                             <div className="flex-1 relative">
                                 {showCustomInput ? (
                                     <input
@@ -58,7 +59,7 @@ const DynamicVariables: React.FC<DynamicVariablesProps> = ({ variables, onAdd, o
                                         value={variable.name}
                                         onChange={(e) => handleNameChange(variable.id, e.target.value)}
                                         placeholder="nombre_personalizado"
-                                        className="w-full bg-gray-700 border border-gray-600 rounded-md p-2 pr-10 text-sm text-gray-200 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 placeholder-gray-500"
+                                        className="w-full bg-white border border-gray-300 rounded-md p-2 pr-10 text-sm text-gray-800 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400"
                                         aria-label={`Nombre de la variable personalizada ${index + 1}`}
                                     />
                                 ) : (
@@ -73,21 +74,21 @@ const DynamicVariables: React.FC<DynamicVariablesProps> = ({ variables, onAdd, o
                                                 setCustomEntryId(null);
                                             }
                                         }}
-                                        className="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm text-gray-200 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 appearance-none"
+                                        className="w-full bg-white border border-gray-300 rounded-md p-2 text-sm text-gray-800 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 appearance-none"
                                         aria-label={`Nombre de la variable ${index + 1}`}
                                     >
                                         <option value="" disabled>Selecciona una variable...</option>
                                         {PREDEFINED_VARIABLES.map(opt => (
                                             <option key={opt.value} value={opt.value}>{opt.label}</option>
                                         ))}
-                                        <option value="CUSTOM" className="font-bold text-orange-300">Otra (Personalizada)...</option>
+                                        <option value="CUSTOM" className="font-bold text-indigo-600">Otra (Personalizada)...</option>
                                     </select>
                                 )}
                                 {showCustomInput && micSupported && (
                                     <button
                                         type="button"
                                         onClick={() => onMicClick(`variable-name-${variable.id}`)}
-                                        className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full transition-colors ${listeningField === `variable-name-${variable.id}` ? 'text-orange-400 bg-orange-500/20' : 'text-gray-400 hover:text-gray-200'}`}
+                                        className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full transition-colors ${listeningField === `variable-name-${variable.id}` ? 'text-indigo-600 bg-indigo-100' : 'text-gray-400 hover:text-gray-600'}`}
                                         aria-label={`Dictar nombre de variable ${index + 1}`}
                                     >
                                         <MicrophoneIcon />
@@ -100,14 +101,14 @@ const DynamicVariables: React.FC<DynamicVariablesProps> = ({ variables, onAdd, o
                                     value={variable.value}
                                     onChange={(e) => onUpdate(variable.id, 'value', e.target.value)}
                                     placeholder="Valor de Ejemplo"
-                                    className="w-full bg-gray-700 border border-gray-600 rounded-md p-2 pr-10 text-sm text-gray-200 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 placeholder-gray-500"
+                                    className="w-full bg-white border border-gray-300 rounded-md p-2 pr-10 text-sm text-gray-800 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400"
                                     aria-label={`Valor de la variable ${index + 1}`}
                                 />
                                 {micSupported && (
                                     <button
                                         type="button"
                                         onClick={() => onMicClick(`variable-value-${variable.id}`)}
-                                        className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full transition-colors ${listeningField === `variable-value-${variable.id}` ? 'text-orange-400 bg-orange-500/20' : 'text-gray-400 hover:text-gray-200'}`}
+                                        className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full transition-colors ${listeningField === `variable-value-${variable.id}` ? 'text-indigo-600 bg-indigo-100' : 'text-gray-400 hover:text-gray-600'}`}
                                         aria-label={`Dictar valor de variable ${index + 1}`}
                                     >
                                         <MicrophoneIcon />
@@ -117,7 +118,7 @@ const DynamicVariables: React.FC<DynamicVariablesProps> = ({ variables, onAdd, o
                             <button
                                 type="button"
                                 onClick={() => onDelete(variable.id)}
-                                className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/20 rounded-full transition-colors"
+                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
                                 aria-label={`Eliminar variable ${index + 1}`}
                             >
                                 <TrashIcon />
@@ -130,7 +131,7 @@ const DynamicVariables: React.FC<DynamicVariablesProps> = ({ variables, onAdd, o
             <button
                 type="button"
                 onClick={onAdd}
-                className="flex items-center justify-center gap-2 mt-2 px-4 py-2 bg-gray-700/50 hover:bg-orange-900/50 text-gray-300 hover:text-orange-300 font-semibold rounded-lg transition-colors text-sm"
+                className="flex items-center justify-center gap-2 mt-2 px-4 py-2 bg-gray-100 hover:bg-indigo-50 text-gray-600 hover:text-indigo-600 font-semibold rounded-lg transition-colors text-sm border border-gray-200 hover:border-indigo-200"
             >
                 <PlusIcon />
                 Añadir Variable

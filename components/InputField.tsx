@@ -34,8 +34,8 @@ const InputField: React.FC<InputFieldProps> = ({
 
     const commonInputClasses = `
         block w-full rounded-lg border appearance-none focus:outline-none focus:ring-0 peer transition-colors duration-200 
-        bg-[#0B0F19] border-gray-700 text-gray-200 focus:border-cyan-400 group-hover:border-gray-600
-        shadow-inner shadow-black/50
+        bg-white border-gray-300 text-gray-900 focus:border-blue-500 group-hover:border-gray-400
+        shadow-sm
         ${(micSupported || onAutoGenerate) ? "pr-20" : ""} 
     `;
     // Increased padding-right to accommodate two buttons if needed
@@ -66,16 +66,16 @@ const InputField: React.FC<InputFieldProps> = ({
                 )}
                 <label
                     htmlFor={inputId}
-                    className={`absolute text-cyan-500/70 duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-3
+                    className={`absolute text-blue-600 bg-white px-1 duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-3
                                peer-placeholder-shown:scale-100
                                peer-placeholder-shown:translate-y-0
                                peer-placeholder-shown:text-gray-500
                                peer-focus:scale-75
                                peer-focus:-translate-y-3
-                               peer-focus:text-cyan-400
+                               peer-focus:text-blue-600
                                pointer-events-none font-medium tracking-wide`}
                 >
-                    {label} {required && <span className="text-red-400">*</span>}
+                    {label} {required && <span className="text-red-500">*</span>}
                 </label>
 
                 <div className="absolute right-3 top-3 flex items-center gap-1">
@@ -83,7 +83,7 @@ const InputField: React.FC<InputFieldProps> = ({
                         <button
                             type="button"
                             onClick={onAutoGenerate}
-                            className="p-1.5 rounded-full text-purple-400 hover:text-white hover:bg-purple-500/20 transition-colors duration-300"
+                            className="p-1.5 rounded-full text-indigo-500 hover:text-white hover:bg-indigo-500 transition-colors duration-300"
                             title="Autocompletar con IA"
                             aria-label="Generar contenido con IA"
                         >
@@ -95,7 +95,7 @@ const InputField: React.FC<InputFieldProps> = ({
                         <button
                             type="button"
                             onClick={onMicClick}
-                            className={`p-1.5 rounded-full transition-colors ${isListening ? 'text-cyan-400 bg-cyan-500/20 animate-pulse' : 'text-gray-500 hover:text-gray-300'}`}
+                            className={`p-1.5 rounded-full transition-colors ${isListening ? 'text-red-500 bg-red-100 animate-pulse' : 'text-gray-400 hover:text-gray-600'}`}
                             aria-label="Activar dictado por voz"
                             title="Dictar por voz"
                         >

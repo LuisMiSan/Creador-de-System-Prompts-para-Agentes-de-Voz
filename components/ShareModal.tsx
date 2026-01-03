@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { CloseIcon, CopyIcon, CheckIcon } from './Icons';
 
@@ -26,23 +27,23 @@ const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, link }) => {
 
     return (
         <div
-            className="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-50 flex items-center justify-center"
+            className="fixed inset-0 bg-gray-800/50 backdrop-blur-sm z-50 flex items-center justify-center"
             onClick={onClose}
             aria-modal="true"
             role="dialog"
         >
             <div
-                className="bg-gray-800/70 backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-lg border border-gray-700 m-4 flex flex-col"
+                className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-lg border border-gray-200 m-4 flex flex-col"
                 onClick={(e) => e.stopPropagation()}
             >
-                <header className="flex items-center justify-between p-4 border-b border-gray-700">
-                    <h2 className="text-xl font-bold text-gray-200">Compartir Prompt</h2>
-                    <button onClick={onClose} className="p-1 text-gray-400 hover:text-white rounded-full hover:bg-gray-700 transition-colors" aria-label="Cerrar modal">
+                <header className="flex items-center justify-between p-4 border-b border-gray-100">
+                    <h2 className="text-xl font-bold text-gray-800">Compartir Prompt</h2>
+                    <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors" aria-label="Cerrar modal">
                         <CloseIcon />
                     </button>
                 </header>
                 <div className="p-6">
-                    <p className="text-gray-400 mb-4 text-sm">
+                    <p className="text-gray-600 mb-4 text-sm">
                         Cualquier persona con este enlace podrá ver y cargar una copia de tu prompt generado.
                     </p>
                     <div className="flex items-center gap-2">
@@ -50,12 +51,12 @@ const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, link }) => {
                             type="text"
                             value={link}
                             readOnly
-                            className="w-full bg-gray-900 border border-gray-600 rounded-md p-2 text-gray-300 text-sm truncate"
+                            className="w-full bg-gray-50 border border-gray-300 rounded-md p-2 text-gray-700 text-sm truncate"
                             aria-label="Enlace para compartir"
                         />
                         <button
                             onClick={handleCopy}
-                            className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 text-white font-semibold rounded-lg transition-colors text-sm ${isCopied ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700'}`}
+                            className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 text-white font-semibold rounded-lg transition-colors text-sm ${isCopied ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
                         >
                             {isCopied ? <CheckIcon /> : <CopyIcon />}
                             {isCopied ? 'Copiado' : 'Copiar'}

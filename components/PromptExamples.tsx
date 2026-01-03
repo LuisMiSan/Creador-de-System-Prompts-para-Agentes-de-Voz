@@ -102,27 +102,27 @@ const examples: Example[] = [
 const PromptExamples: React.FC<PromptExamplesProps> = ({ onSelectExample }) => {
     return (
         <section className="mb-12">
-            <h2 className="text-2xl font-bold text-center text-cyan-400 mb-2 uppercase tracking-wide">Core Templates</h2>
+            <h2 className="text-2xl font-bold text-center text-gray-800 mb-2 uppercase tracking-wide">Core Templates</h2>
             <p className="text-center text-gray-500 mb-8 font-mono text-sm">Select a preset configuration to initialize agent.</p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {examples.map((example) => (
                     <div 
                         key={example.title}
-                        className="bg-[#131b2e]/80 border border-gray-700 rounded-xl p-6 flex flex-col items-start hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(34,211,238,0.15)] transition-all duration-300 group backdrop-blur-sm"
+                        className="bg-white border border-gray-200 rounded-xl p-6 flex flex-col items-start hover:border-blue-500 hover:shadow-lg transition-all duration-300 group"
                     >
                         <div className="flex items-center gap-4 mb-3">
-                             <div className="bg-[#0B0F19] border border-gray-700 p-2 rounded-lg text-cyan-400 shadow-lg">
+                             <div className="bg-gray-50 border border-gray-200 p-2 rounded-lg text-blue-600 shadow-sm">
                                 {example.icon}
                              </div>
-                             <h3 className="text-lg font-bold text-gray-200 group-hover:text-cyan-300 transition-colors">{example.title}</h3>
+                             <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-700 transition-colors">{example.title}</h3>
                         </div>
 
-                        <p className="text-gray-400 text-sm mb-5 flex-grow leading-relaxed">{example.description}</p>
+                        <p className="text-gray-600 text-sm mb-5 flex-grow leading-relaxed">{example.description}</p>
                         
                         <button 
                             onClick={() => onSelectExample(example.data)}
-                            className="w-full flex items-center justify-center gap-2 mt-auto px-4 py-2 bg-[#0B0F19] hover:bg-cyan-900/20 border border-gray-700 hover:border-cyan-500 text-gray-300 hover:text-cyan-400 font-semibold rounded-lg transition-all duration-200 text-sm"
+                            className="w-full flex items-center justify-center gap-2 mt-auto px-4 py-2 bg-gray-50 hover:bg-blue-50 border border-gray-300 hover:border-blue-400 text-gray-700 hover:text-blue-700 font-semibold rounded-lg transition-all duration-200 text-sm"
                         >
                             <SparklesIcon/>
                             Load Template

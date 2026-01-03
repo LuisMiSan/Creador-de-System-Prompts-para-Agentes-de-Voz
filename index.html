@@ -12,15 +12,12 @@
         theme: {
           extend: {
             colors: {
+              // Redefining 'deep' to be compatible with light mode structures if missed, 
+              // but we will mainly use standard colors.
               deep: {
-                900: '#0B0F19', // Main background similar to image
-                800: '#131b2e', // Panel background
-                700: '#1e293b', // Borders
-              },
-              neon: {
-                cyan: '#22d3ee',
-                purple: '#a855f7',
-                blue: '#3b82f6'
+                900: '#f8fafc', // Very light gray (Background)
+                800: '#ffffff', // White (Panels)
+                700: '#e2e8f0', // Borders
               }
             }
           }
@@ -30,31 +27,34 @@
     <style>
       body {
         font-family: 'Inter', sans-serif;
-        background-color: #0B0F19; /* Deep dark background */
-        background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #0B0F19 70%);
+        background-color: #f8fafc; /* Slate-50 */
+        color: #1e293b; /* Slate-800 */
       }
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
       
-      /* Scrollbar styling for DeepCode look */
+      /* Scrollbar styling for Light Mode */
       ::-webkit-scrollbar {
         width: 8px;
         height: 8px;
       }
       ::-webkit-scrollbar-track {
-        background: #0B0F19; 
+        background: #f1f5f9; 
       }
       ::-webkit-scrollbar-thumb {
-        background: #1e293b; 
+        background: #cbd5e1; 
         border-radius: 4px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #334155; 
+        background: #94a3b8; 
       }
 
-      /* Markdown Preview Styles for Screen */
+      /* Markdown Preview Styles for Light Screen */
       .prose-styles {
-        color: #cbd5e1; /* text-slate-300 */
+        color: #334155; /* slate-700 */
         line-height: 1.7;
+      }
+      .prose-styles h1, .prose-styles h2, .prose-styles h3 {
+        color: #0f172a; /* slate-900 */
       }
       .prose-styles h3 {
         font-size: 1.25rem; 
@@ -62,8 +62,8 @@
         margin-top: 1.5rem;
         margin-bottom: 1rem;
         padding-bottom: 0.5rem;
-        border-bottom: 1px solid #1e293b; /* darker border */
-        color: #22d3ee; /* Neon Cyan headers */
+        border-bottom: 1px solid #e2e8f0; 
+        color: #2563eb; /* Blue-600 */
         text-transform: uppercase;
         letter-spacing: 0.05em;
       }
@@ -71,7 +71,7 @@
         margin-left: 1.5rem;
         margin-bottom: 1rem;
       }
-      .prose-styles ul { list-style-type: disc; marker: #22d3ee; }
+      .prose-styles ul { list-style-type: disc; marker: #2563eb; }
       .prose-styles ol { list-style-type: decimal; }
       .prose-styles li {
         margin-bottom: 0.5rem;
@@ -80,7 +80,7 @@
         margin-bottom: 1rem;
       }
       .prose-styles a {
-        color: #22d3ee; /* Cyan links */
+        color: #2563eb; 
         text-decoration: none;
       }
       .prose-styles a:hover {
@@ -88,20 +88,20 @@
       }
       .prose-styles strong {
         font-weight: 700;
-        color: #f8fafc; /* White */
+        color: #0f172a;
       }
       .prose-styles code {
-        background-color: #0f172a; 
-        color: #a855f7; /* Neon Purple code */
+        background-color: #f1f5f9; 
+        color: #7c3aed; /* Violet-600 */
         padding: 0.2rem 0.4rem;
         border-radius: 0.25rem;
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
         font-size: 0.9em;
-        border: 1px solid #1e293b;
+        border: 1px solid #e2e8f0;
       }
       .prose-styles pre {
-        background-color: #020617; /* Almost black */
-        border: 1px solid #1e293b; 
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0; 
         border-radius: 0.5rem;
         padding: 1rem;
         overflow-x: auto;
@@ -111,112 +111,17 @@
         background-color: transparent;
         padding: 0;
         border: none;
-        color: #e2e8f0;
+        color: #334155;
       }
       .prose-styles blockquote {
-        border-left: 4px solid #22d3ee; /* Cyan border */
+        border-left: 4px solid #2563eb;
         padding-left: 1rem;
         margin-left: 0;
         font-style: italic;
-        color: #94a3b8; 
-        background: rgba(34, 211, 238, 0.05);
+        color: #475569; 
+        background: #eff6ff; /* blue-50 */
         padding: 0.5rem 1rem;
         border-radius: 0 4px 4px 0;
-      }
-
-      /* --- ROBUST PRINT STRATEGY --- */
-      @media print {
-        /* Hide everything by default */
-        body > * {
-          display: none !important;
-        }
-
-        /* Show only the dedicated print container */
-        #print-container {
-          display: block !important;
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          margin: 0;
-          padding: 20px;
-          background-color: white !important;
-          color: black !important;
-          font-family: Georgia, 'Times New Roman', serif;
-          font-size: 11pt;
-          line-height: 1.5;
-          z-index: 99999;
-        }
-
-        /* Ensure content inside print container is visible and styled for print */
-        #print-container * {
-          visibility: visible !important;
-          color: black !important;
-          background-color: transparent !important;
-          box-shadow: none !important;
-          text-shadow: none !important;
-        }
-
-        /* Hide elements explicitly marked as no-print */
-        #print-container .no-print {
-          display: none !important;
-        }
-
-        /* Specific Markdown Styling for Print */
-        #print-container h1, #print-container h2 {
-          border-bottom: 2px solid #000 !important;
-          padding-bottom: 5px !important;
-          margin-bottom: 15px !important;
-          margin-top: 20px !important;
-        }
-        
-        #print-container h3 {
-          border-bottom: 1px solid #ccc !important;
-          margin-top: 15px !important;
-          font-weight: bold !important;
-        }
-
-        #print-container a {
-          text-decoration: underline !important;
-          color: #000 !important;
-        }
-
-        #print-container code {
-          border: 1px solid #ddd !important;
-          background-color: #f5f5f5 !important;
-          padding: 2px 4px !important;
-          border-radius: 3px !important;
-          font-family: 'Courier New', Courier, monospace !important;
-        }
-
-        #print-container pre {
-          background-color: #f5f5f5 !important;
-          border: 1px solid #ddd !important;
-          padding: 10px !important;
-          white-space: pre-wrap !important;
-        }
-
-        #print-container blockquote {
-          border-left: 3px solid #000 !important;
-          padding-left: 10px !important;
-          font-style: italic !important;
-        }
-        
-        /* Table Styling for Print (SavedPrompts) */
-        #print-container table {
-            width: 100% !important;
-            border-collapse: collapse !important;
-            margin-top: 20px !important;
-        }
-        #print-container th, #print-container td {
-            border: 1px solid #ddd !important;
-            padding: 8px !important;
-            text-align: left !important;
-        }
-        #print-container th {
-            background-color: #eee !important;
-            font-weight: bold !important;
-        }
       }
     </style>
 <script type="importmap">
@@ -232,7 +137,7 @@
 }
 </script>
 </head>
-<body class="bg-deep-900 text-slate-300">
+<body class="bg-gray-50 text-slate-800">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 </body>
