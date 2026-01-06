@@ -14,6 +14,9 @@ import MarkdownEditor from './components/MarkdownEditor';
 import ShareModal from './components/ShareModal';
 import SuggestionModal from './components/SuggestionModal';
 import { translations, Language } from './translations';
+// Import PDF libraries
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 // Extend the window object with SpeechRecognition
 interface CustomWindow extends Window {
@@ -177,7 +180,15 @@ const App: React.FC = () => {
                         setNiche(sharedData.niche || '');
                         setGeneratedPrompt(sharedData.generatedPrompt || '');
 
-                        setToastMessage('¡Prompt compartido cargado con éxito!');
+                        // Cannot access 't' here easily as it's inside useEffect, using simple string or moving t out?
+                        // Actually 't' depends on language state. For initial load toast, we can assume ES or reload based on saved pref (if we had one).
+                        // For now we will use a generic message or just set it. 
+                        // To be clean, we can rely on re-render. But useEffect runs once.
+                        // Let's just use hardcoded English/Spanish neutral or current state language (default 'es').
+                        // Better: Use a ref or simple logic.
+                        const currentLang = language; 
+                        const msgs = translations[currentLang];
+                        setToastMessage(msgs.toastSharedLoaded);
                         setTimeout(() => setToastMessage(''), 3000);
 
                         // Clean the URL
@@ -293,7 +304,7 @@ const App: React.FC = () => {
         setError(null);
         setVariables([]);
         formRef.current?.scrollIntoView({ behavior: 'smooth' });
-        setToastMessage('Plantilla cargada. ¡Ya puedes editarla!');
+        setToastMessage(t.toastTemplateLoaded);
         setTimeout(() => setToastMessage(''), 3000);
     };
 
@@ -302,12 +313,12 @@ const App: React.FC = () => {
         const minLength = 3;
 
         if (trimmedNiche.length < minLength) {
-            setError(`El campo '${t.nicheLabel}' es obligatorio y debe tener al menos ${minLength} caracteres.`);
+            setError(t.errorFieldRequired.replace('{0}', t.nicheLabel).replace('{1}', minLength.toString()));
             return;
         }
         
         if (!generatedPrompt) {
-            setError("No hay ningún prompt generado para guardar.");
+            setError(t.errorNoPrompt);
             return;
         }
         setError(null);
@@ -328,13 +339,13 @@ const App: React.FC = () => {
         );
 
         if (isDuplicate) {
-            setToastMessage('Este prompt ya está en tu historial.');
+            setToastMessage(t.toastDuplicate);
             setTimeout(() => setToastMessage(''), 3000);
             return;
         }
 
         setHistory(prevHistory => [newHistoryItem, ...prevHistory]);
-        setToastMessage('Prompt guardado en la base de datos');
+        setToastMessage(t.toastSavedDB);
         setTimeout(() => setToastMessage(''), 3000);
     };
 
@@ -348,17 +359,17 @@ const App: React.FC = () => {
         const minLength = 3;
 
         if (trimmedRole.length < minLength) {
-            setError(`El campo '${t.roleLabel}' es obligatorio y debe tener al menos ${minLength} caracteres.`);
+            setError(t.errorFieldRequired.replace('{0}', t.roleLabel).replace('{1}', minLength.toString()));
             return;
         }
 
         if (trimmedTask.length < minLength) {
-            setError(`El campo '${t.taskLabel}' es obligatorio y debe tener al menos ${minLength} caracteres.`);
+            setError(t.errorFieldRequired.replace('{0}', t.taskLabel).replace('{1}', minLength.toString()));
             return;
         }
         
         if (trimmedNiche.length < minLength) {
-            setError(`El campo '${t.nicheLabel}' es obligatorio y debe tener al menos ${minLength} caracteres.`);
+            setError(t.errorFieldRequired.replace('{0}', t.nicheLabel).replace('{1}', minLength.toString()));
             return;
         }
 
@@ -422,119 +433,63 @@ const App: React.FC = () => {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             
-            setToastMessage('Descargando archivo Markdown...');
+            setToastMessage(t.toastDownloadingMD);
             setTimeout(() => setToastMessage(''), 2000);
         } catch (e) {
             console.error("Download failed", e);
-            setError("Error al descargar el archivo.");
+            setError(t.errorDownload);
         }
     };
 
-    const handleExportPdf = () => {
-        // Find the content to print
-        const content = document.querySelector('#generated-prompt-print-area .prompt-content-for-print');
+    const handleExportPdf = async () => {
+        // Target specifically the rendered content div within the editor
+        // We look for the class 'prompt-content-for-print' added in MarkdownEditor.tsx
+        const content = document.querySelector('#generated-prompt-print-area .prompt-content-for-print') as HTMLElement;
         
         if (!content) {
-            console.error("No print content found");
-            setToastMessage("Error: No hay contenido para imprimir");
+            console.error("No content found for PDF");
+            setToastMessage(t.errorNoPDFContent);
             return;
         }
 
-        // Create a hidden iframe
-        const iframe = document.createElement('iframe');
-        iframe.style.position = 'fixed';
-        iframe.style.right = '0';
-        iframe.style.bottom = '0';
-        iframe.style.width = '0';
-        iframe.style.height = '0';
-        iframe.style.border = '0';
-        document.body.appendChild(iframe);
+        setToastMessage(t.toastGeneratingPDF);
 
-        const doc = iframe.contentWindow?.document;
-        if (!doc) return;
+        try {
+            // 1. Capture the DOM element as a canvas
+            const canvas = await html2canvas(content, {
+                scale: 2, // Improve resolution
+                backgroundColor: '#ffffff', // Force white background
+                logging: false,
+            });
 
-        // Build the full HTML document for the iframe
-        doc.open();
-        doc.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>System Prompt - ${niche || 'Generado'}</title>
-                <style>
-                    body {
-                        font-family: 'Helvetica', 'Arial', sans-serif;
-                        color: #000;
-                        background: #fff;
-                        padding: 40px;
-                        line-height: 1.6;
-                        font-size: 12pt;
-                    }
-                    h1 { 
-                        font-size: 24px; 
-                        border-bottom: 2px solid #000; 
-                        padding-bottom: 10px; 
-                        margin-bottom: 30px; 
-                    }
-                    h2 { 
-                        font-size: 18px; 
-                        color: #000;
-                        border-bottom: 1px solid #ccc;
-                        padding-bottom: 5px;
-                        margin-top: 25px;
-                        text-transform: uppercase;
-                        letter-spacing: 1px;
-                    }
-                    h3 { font-size: 16px; margin-top: 20px; font-weight: bold; }
-                    p { margin-bottom: 15px; }
-                    ul, ol { margin-left: 20px; margin-bottom: 15px; }
-                    li { margin-bottom: 5px; }
-                    pre {
-                        background: #f4f4f4;
-                        border: 1px solid #ddd;
-                        padding: 15px;
-                        border-radius: 5px;
-                        white-space: pre-wrap;
-                        font-family: 'Courier New', monospace;
-                        font-size: 11px;
-                        color: #000;
-                    }
-                    code {
-                        background: #f4f4f4;
-                        padding: 2px 5px;
-                        font-family: 'Courier New', monospace;
-                        font-size: 0.9em;
-                    }
-                    blockquote {
-                        border-left: 4px solid #333;
-                        margin: 0;
-                        padding-left: 15px;
-                        color: #444;
-                        font-style: italic;
-                    }
-                </style>
-            </head>
-            <body>
-                <h1>System Prompt: ${niche || 'Agente IA'}</h1>
-                ${content.innerHTML}
-            </body>
-            </html>
-        `);
-        doc.close();
+            const imgData = canvas.toDataURL('image/png');
+            
+            // 2. Calculate PDF dimensions
+            // We'll create a PDF that fits the content exactly (like a digital receipt or long document)
+            // instead of splitting into A4 pages which cuts text.
+            const imgWidth = 210; // A4 width in mm
+            const pageHeight = (canvas.height * imgWidth) / canvas.width;
+            
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: [imgWidth, pageHeight] // Custom height based on content
+            });
 
-        // Wait for content to load then print
-        iframe.onload = () => {
-            // Small delay to ensure styles are applied
-            setTimeout(() => {
-                iframe.contentWindow?.focus();
-                iframe.contentWindow?.print();
-                
-                // Remove iframe after printing
-                // We use a longer timeout to ensure the print dialog has opened
-                setTimeout(() => {
-                    document.body.removeChild(iframe);
-                }, 1000);
-            }, 500);
-        };
+            // 3. Add image to PDF
+            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, pageHeight);
+
+            // 4. Save
+            const fileName = `prompt-${(niche || 'agent').replace(/\s+/g, '-').toLowerCase()}.pdf`;
+            pdf.save(fileName);
+            
+            setToastMessage(t.toastPDFDownloaded);
+
+        } catch (err) {
+            console.error("PDF Generation failed:", err);
+            setError(t.errorPDFGen);
+            setToastMessage(t.errorPDFGen);
+        }
     };
 
     const handleOpenShareModal = () => {
@@ -557,7 +512,7 @@ const App: React.FC = () => {
             setIsShareModalOpen(true);
         } catch (error) {
             console.error("Error creating share link:", error);
-            setError("No se pudo crear el enlace para compartir.");
+            setError(t.errorShareLink);
         }
     };
 
@@ -570,9 +525,9 @@ const App: React.FC = () => {
     };
 
     const handleDeleteHistoryItem = (id: string) => {
-        if (window.confirm('¿Estás seguro de que quieres borrar este prompt?')) {
+        if (window.confirm(t.confirmDelete)) {
             setHistory(prev => prev.filter(item => item.id !== id));
-            setToastMessage('Prompt eliminado.');
+            setToastMessage(t.toastDeleted);
             setTimeout(() => setToastMessage(''), 3000);
         }
     };
@@ -644,7 +599,7 @@ const App: React.FC = () => {
             }
         });
         
-        setToastMessage('Variable actualizada');
+        setToastMessage(t.toastVarUpdated);
         setTimeout(() => setToastMessage(''), 2000);
     };
 
@@ -667,7 +622,7 @@ const App: React.FC = () => {
             setSuggestions(result);
         } catch (e) {
             console.error(e);
-            setError("Error generating suggestions. Please try again.");
+            setError(t.errorGenSuggestions);
             setSuggestionModalOpen(false);
         } finally {
             setIsGeneratingSuggestion(false);
@@ -678,7 +633,7 @@ const App: React.FC = () => {
         if (activeSuggestionField) {
             handleInputChange(activeSuggestionField, value);
             setSuggestionModalOpen(false);
-            setToastMessage('Contenido insertado correctamente');
+            setToastMessage(t.toastContentInserted);
             setTimeout(() => setToastMessage(''), 2000);
         }
     };
@@ -765,6 +720,7 @@ const App: React.FC = () => {
                                     onMicClick={() => handleMicClick('agentRole')}
                                     isListening={listeningField === 'agentRole'}
                                     micSupported={micSupported}
+                                    lang={language}
                                 />
                             </div>
                             <div className="md:col-span-2">
@@ -778,6 +734,7 @@ const App: React.FC = () => {
                                     onMicClick={() => handleMicClick('task')}
                                     isListening={listeningField === 'task'}
                                     micSupported={micSupported}
+                                    lang={language}
                                 />
                             </div>
                             <InputField
@@ -789,6 +746,7 @@ const App: React.FC = () => {
                                 onMicClick={() => handleMicClick('personality')}
                                 isListening={listeningField === 'personality'}
                                 micSupported={micSupported}
+                                lang={language}
                             />
                              <InputField
                                 label={t.toneLabel}
@@ -799,6 +757,7 @@ const App: React.FC = () => {
                                 onMicClick={() => handleMicClick('toneAndLanguage')}
                                 isListening={listeningField === 'toneAndLanguage'}
                                 micSupported={micSupported}
+                                lang={language}
                             />
                             <div className="md:col-span-2">
                                 <InputField
@@ -811,6 +770,7 @@ const App: React.FC = () => {
                                     onMicClick={() => handleMicClick('context')}
                                     isListening={listeningField === 'context'}
                                     micSupported={micSupported}
+                                    lang={language}
                                 />
                             </div>
                             <InputField
@@ -824,6 +784,7 @@ const App: React.FC = () => {
                                 isListening={listeningField === 'responseGuidelines'}
                                 micSupported={micSupported}
                                 onAutoGenerate={() => handleAutoGenerate('responseGuidelines')}
+                                lang={language}
                             />
                             <InputField
                                 label={t.stepByStepLabel}
@@ -836,6 +797,7 @@ const App: React.FC = () => {
                                 isListening={listeningField === 'stepByStep'}
                                 micSupported={micSupported}
                                 onAutoGenerate={() => handleAutoGenerate('stepByStep')}
+                                lang={language}
                             />
                             <div className="md:col-span-2">
                                 <InputField
@@ -848,6 +810,7 @@ const App: React.FC = () => {
                                     isListening={listeningField === 'notes'}
                                     micSupported={micSupported}
                                     onAutoGenerate={() => handleAutoGenerate('notes')}
+                                    lang={language}
                                 />
                             </div>
 
@@ -862,6 +825,7 @@ const App: React.FC = () => {
                                     onMicClick={() => handleMicClick('niche')}
                                     isListening={listeningField === 'niche'}
                                     micSupported={micSupported}
+                                    lang={language}
                                 />
                             </div>
 
@@ -946,7 +910,7 @@ const App: React.FC = () => {
                                         />
                                         <IconButton
                                             onClick={handleExportPdf}
-                                            text="Guardar PDF"
+                                            text={t.btnSavePDF}
                                             icon={<PdfIcon />}
                                             className="bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300"
                                         />

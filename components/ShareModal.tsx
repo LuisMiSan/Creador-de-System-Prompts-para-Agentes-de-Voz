@@ -1,15 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { CloseIcon, CopyIcon, CheckIcon } from './Icons';
+import { translations, Language } from '../translations';
 
 interface ShareModalProps {
     isOpen: boolean;
     onClose: () => void;
     link: string;
+    lang: Language;
 }
 
-const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, link }) => {
+const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, link, lang }) => {
     const [isCopied, setIsCopied] = useState(false);
+    const t = translations[lang];
 
     useEffect(() => {
         if (!isOpen) {
@@ -37,14 +40,14 @@ const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, link }) => {
                 onClick={(e) => e.stopPropagation()}
             >
                 <header className="flex items-center justify-between p-4 border-b border-gray-100">
-                    <h2 className="text-xl font-bold text-gray-800">Compartir Prompt</h2>
-                    <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors" aria-label="Cerrar modal">
+                    <h2 className="text-xl font-bold text-gray-800">{t.shareTitle}</h2>
+                    <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors" aria-label={t.ariaClose}>
                         <CloseIcon />
                     </button>
                 </header>
                 <div className="p-6">
                     <p className="text-gray-600 mb-4 text-sm">
-                        Cualquier persona con este enlace podrá ver y cargar una copia de tu prompt generado.
+                        {t.shareDesc}
                     </p>
                     <div className="flex items-center gap-2">
                         <input
@@ -52,14 +55,14 @@ const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, link }) => {
                             value={link}
                             readOnly
                             className="w-full bg-gray-50 border border-gray-300 rounded-md p-2 text-gray-700 text-sm truncate"
-                            aria-label="Enlace para compartir"
+                            aria-label={t.linkPlaceholder}
                         />
                         <button
                             onClick={handleCopy}
                             className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 text-white font-semibold rounded-lg transition-colors text-sm ${isCopied ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
                         >
                             {isCopied ? <CheckIcon /> : <CopyIcon />}
-                            {isCopied ? 'Copiado' : 'Copiar'}
+                            {isCopied ? t.copiedBtn : t.copyBtn}
                         </button>
                     </div>
                 </div>

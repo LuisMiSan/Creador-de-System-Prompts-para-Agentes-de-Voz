@@ -4,12 +4,14 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { DynamicVariable } from '../types';
 import { CheckIcon, CloseIcon } from './Icons';
+import { translations, Language } from '../translations';
 
 interface MarkdownEditorProps {
     value: string;
     onChange: (value: string) => void;
     variables?: DynamicVariable[];
     onVariableUpdate?: (oldName: string, newName: string, newValue: string) => void;
+    lang: Language;
 }
 
 interface EditingVarState {
@@ -19,9 +21,10 @@ interface EditingVarState {
     rect: DOMRect;
 }
 
-const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, variables = [], onVariableUpdate }) => {
+const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, variables = [], onVariableUpdate, lang }) => {
     const [activeTab, setActiveTab] = useState<'preview' | 'edit'>('preview');
     const [editingVar, setEditingVar] = useState<EditingVarState | null>(null);
+    const t = translations[lang];
     
     // Refs for the popover logic
     const popoverRef = useRef<HTMLDivElement>(null);
@@ -90,7 +93,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, variab
                                 key={i}
                                 onClick={(e) => handleVariableClick(part, e)}
                                 className="inline-block bg-purple-100 text-purple-700 border border-purple-200 rounded px-1.5 py-0.5 mx-0.5 cursor-pointer hover:bg-purple-200 hover:border-purple-300 transition-colors select-none text-[0.9em] font-mono shadow-sm"
-                                title="Clic para editar variable"
+                                title={t.titleEditVar}
                             >
                                 {part}
                             </span>
@@ -128,10 +131,10 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, variab
             {/* Tabs are not printed */}
             <div className="flex items-end gap-0 mb-0 border-b border-gray-200 no-print">
                 <button onClick={() => setActiveTab('preview')} className={tabClasses('preview')}>
-                    Preview Output
+                    {t.tabPreview}
                 </button>
                 <button onClick={() => setActiveTab('edit')} className={tabClasses('edit')}>
-                    Raw Markdown
+                    {t.tabRaw}
                 </button>
             </div>
             
@@ -142,7 +145,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, variab
                         value={value}
                         onChange={(e) => onChange(e.target.value)}
                         className="w-full h-96 p-4 rounded-md bg-white border border-gray-300 text-gray-800 font-mono text-sm focus:outline-none focus:border-blue-500 resize-y leading-relaxed"
-                        aria-label="Editor de Markdown"
+                        aria-label={t.ariaEditor}
                     />
                 </div>
                 
@@ -171,14 +174,14 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, variab
                     ref={popoverRef}
                 >
                     <div className="flex justify-between items-center border-b border-gray-100 pb-2">
-                        <span className="text-xs font-bold text-purple-600 uppercase tracking-wider">Edit Variable</span>
+                        <span className="text-xs font-bold text-purple-600 uppercase tracking-wider">{t.editVarTitle}</span>
                         <button onClick={() => setEditingVar(null)} className="text-gray-400 hover:text-gray-600">
                             <CloseIcon />
                         </button>
                     </div>
                     
                     <div>
-                        <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Variable Name</label>
+                        <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">{t.editVarName}</label>
                         <div className="flex items-center bg-gray-50 rounded border border-gray-200 px-2">
                             <span className="text-purple-500 font-mono text-sm">{`{{`}</span>
                             <input 
@@ -192,12 +195,12 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, variab
                     </div>
 
                     <div>
-                        <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Value</label>
+                        <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">{t.editVarVal}</label>
                         <input 
                             type="text" 
                             value={editingVar.value}
                             onChange={(e) => setEditingVar({...editingVar, value: e.target.value})}
-                            placeholder="Enter value..."
+                            placeholder="..."
                             className="w-full bg-white border border-gray-300 rounded px-2 py-1.5 text-sm text-gray-800 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                         />
                     </div>
@@ -207,7 +210,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, variab
                         className="flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-2 rounded transition-colors mt-1 uppercase tracking-wide shadow-md"
                     >
                         <CheckIcon className="w-3 h-3" />
-                        Update System
+                        {t.updateSysBtn}
                     </button>
 
                     {/* Arrow pointing down */}

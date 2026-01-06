@@ -53,6 +53,12 @@ export const translations = {
         nichePlaceholder: "Ej: Peluquería, Inmobiliaria, Restaurante...",
         nicheHelp: "Categoriza este prompt para encontrarlo fácilmente. (Obligatorio)",
         
+        // InputField Tooltips & Aria
+        titleAutocomplete: "Autocompletar con IA",
+        ariaGenerate: "Generar contenido con IA",
+        ariaMic: "Activar dictado por voz",
+        titleMic: "Dictar por voz",
+
         // Buttons
         processBtn: "Generar System Prompt",
         processingBtn: "Procesando...",
@@ -64,17 +70,48 @@ export const translations = {
         shareBtn: "Compartir",
         copyBtn: "Copiar",
         copiedBtn: "Copiado",
+        btnSavePDF: "Guardar PDF",
         
+        // Messages & Toasts
+        toastSharedLoaded: "¡Prompt compartido cargado con éxito!",
+        toastTemplateLoaded: "Plantilla cargada. ¡Ya puedes editarla!",
+        errorFieldRequired: "El campo '{0}' es obligatorio y debe tener al menos {1} caracteres.",
+        errorNoPrompt: "No hay ningún prompt generado para guardar.",
+        toastDuplicate: "Este prompt ya está en tu historial.",
+        toastSavedDB: "Prompt guardado en la base de datos",
+        toastDownloadingMD: "Descargando archivo Markdown...",
+        errorDownload: "Error al descargar el archivo.",
+        errorNoPDFContent: "Error: No hay contenido para generar PDF",
+        toastGeneratingPDF: "Generando PDF... por favor espera",
+        toastPDFDownloaded: "PDF descargado correctamente",
+        errorPDFGen: "Error al generar el archivo PDF.",
+        errorShareLink: "No se pudo crear el enlace para compartir.",
+        confirmDelete: "¿Estás seguro de que quieres borrar este prompt?",
+        toastDeleted: "Prompt eliminado.",
+        toastVarUpdated: "Variable actualizada",
+        errorGenSuggestions: "Error generando sugerencias. Por favor intenta de nuevo.",
+        toastContentInserted: "Contenido insertado correctamente",
+
         // History
         historyTitle: "Historial de Procesamiento",
         historySubtitle: "Registros de base de datos y salidas generadas.",
         searchPlaceholder: "Buscar registros...",
         exportBtn: "Exportar",
-        printBtn: "Imprimir",
+        printBtn: "PDF",
         noHistory: "No hay historial de procesamiento",
         noHistorySub: "Genera tu primer prompt para llenar esta tabla.",
         noMatches: "No se encontraron coincidencias",
+        errorPDFHistory: "Error al generar el PDF del historial.",
         
+        // Markdown Export Content
+        mdTitle: "Mi Base de Datos de Prompts",
+        mdPromptFor: "Prompt para",
+        mdNoNiche: "Sin Nicho",
+        mdDate: "Fecha",
+        mdInputData: "Datos de Entrada",
+        mdDynamicVars: "Variables Dinámicas",
+        mdGeneratedPrompt: "Prompt Generado",
+
         // Table Headers
         thNiche: "Nicho / Etiqueta",
         thAgent: "Definición del Agente",
@@ -106,6 +143,24 @@ export const translations = {
         customVarPlaceholder: "nombre_personalizado",
         valPlaceholder: "Valor de Ejemplo",
         
+        // Dynamic Vars Aria/Labels
+        ariaName: "Nombre de la variable personalizada {0}",
+        ariaSelect: "Nombre de la variable {0}",
+        ariaMicName: "Dictar nombre de variable {0}",
+        ariaValue: "Valor de la variable {0}",
+        ariaMicValue: "Dictar valor de variable {0}",
+        ariaDelete: "Eliminar variable {0}",
+
+        // Predefined Vars
+        varClientName: "Nombre del Cliente",
+        varAgentName: "Nombre del Agente",
+        varCompany: "Empresa del Cliente",
+        varDate: "Fecha Actual",
+        varTime: "Hora Actual",
+        varOrderNum: "Número de Pedido",
+        varProduct: "Producto/Servicio",
+        varReason: "Motivo de la Llamada",
+        
         // Markdown Editor
         tabPreview: "Vista Previa",
         tabRaw: "Código Markdown",
@@ -113,11 +168,15 @@ export const translations = {
         editVarName: "Nombre Variable",
         editVarVal: "Valor",
         updateSysBtn: "Actualizar Sistema",
+        ariaEditor: "Editor de Markdown",
+        titleEditVar: "Clic para editar variable",
         
         // Share Modal
         shareTitle: "Compartir Prompt",
         shareDesc: "Cualquier persona con este enlace podrá ver y cargar una copia de tu prompt generado.",
         linkPlaceholder: "Enlace para compartir",
+        ariaClose: "Cerrar modal",
+        ariaLink: "Enlace para compartir",
 
         // Suggestions Modal
         suggestionTitle: "Generador de Opciones IA",
@@ -177,6 +236,12 @@ export const translations = {
         nicheLabel: "Prompt Niche",
         nichePlaceholder: "Ex: Hair Salon, Real Estate, Restaurant...",
         nicheHelp: "Categorize this prompt to find it easily. (Required)",
+
+        // InputField Tooltips & Aria
+        titleAutocomplete: "Autocomplete with AI",
+        ariaGenerate: "Generate content with AI",
+        ariaMic: "Activate voice dictation",
+        titleMic: "Dictate by voice",
         
         // Buttons
         processBtn: "Generate System Prompt",
@@ -189,16 +254,47 @@ export const translations = {
         shareBtn: "Share",
         copyBtn: "Copy",
         copiedBtn: "Copied",
+        btnSavePDF: "Save PDF",
+        
+        // Messages & Toasts
+        toastSharedLoaded: "Shared prompt loaded successfully!",
+        toastTemplateLoaded: "Template loaded. You can edit it now!",
+        errorFieldRequired: "The field '{0}' is required and must have at least {1} characters.",
+        errorNoPrompt: "There is no generated prompt to save.",
+        toastDuplicate: "This prompt is already in your history.",
+        toastSavedDB: "Prompt saved to database",
+        toastDownloadingMD: "Downloading Markdown file...",
+        errorDownload: "Error downloading file.",
+        errorNoPDFContent: "Error: No content to generate PDF",
+        toastGeneratingPDF: "Generating PDF... please wait",
+        toastPDFDownloaded: "PDF downloaded successfully",
+        errorPDFGen: "Error generating PDF file.",
+        errorShareLink: "Could not create share link.",
+        confirmDelete: "Are you sure you want to delete this prompt?",
+        toastDeleted: "Prompt deleted.",
+        toastVarUpdated: "Variable updated",
+        errorGenSuggestions: "Error generating suggestions. Please try again.",
+        toastContentInserted: "Content inserted successfully",
         
         // History
         historyTitle: "Processing History",
         historySubtitle: "Database records and generated outputs.",
         searchPlaceholder: "Search logs...",
         exportBtn: "Export",
-        printBtn: "Print",
+        printBtn: "PDF",
         noHistory: "No processing history yet",
         noHistorySub: "Generate your first prompt to populate this table.",
         noMatches: "No matches found",
+        errorPDFHistory: "Error generating history PDF.",
+
+        // Markdown Export Content
+        mdTitle: "My Prompt Database",
+        mdPromptFor: "Prompt for",
+        mdNoNiche: "No Niche",
+        mdDate: "Date",
+        mdInputData: "Input Data",
+        mdDynamicVars: "Dynamic Variables",
+        mdGeneratedPrompt: "Generated Prompt",
         
         // Table Headers
         thNiche: "Niche / Tag",
@@ -230,6 +326,24 @@ export const translations = {
         customVarOption: "Other (Custom)...",
         customVarPlaceholder: "custom_name",
         valPlaceholder: "Example Value",
+
+        // Dynamic Vars Aria/Labels
+        ariaName: "Custom variable name {0}",
+        ariaSelect: "Variable name {0}",
+        ariaMicName: "Dictate variable name {0}",
+        ariaValue: "Variable value {0}",
+        ariaMicValue: "Dictate variable value {0}",
+        ariaDelete: "Delete variable {0}",
+
+        // Predefined Vars
+        varClientName: "Client Name",
+        varAgentName: "Agent Name",
+        varCompany: "Client Company",
+        varDate: "Current Date",
+        varTime: "Current Time",
+        varOrderNum: "Order Number",
+        varProduct: "Product/Service",
+        varReason: "Call Reason",
         
         // Markdown Editor
         tabPreview: "Preview Output",
@@ -238,11 +352,15 @@ export const translations = {
         editVarName: "Variable Name",
         editVarVal: "Value",
         updateSysBtn: "Update System",
+        ariaEditor: "Markdown Editor",
+        titleEditVar: "Click to edit variable",
         
         // Share Modal
         shareTitle: "Share Prompt",
         shareDesc: "Anyone with this link can view and load a copy of your generated prompt.",
         linkPlaceholder: "Share link",
+        ariaClose: "Close modal",
+        ariaLink: "Share link",
 
         // Suggestions Modal
         suggestionTitle: "AI Option Generator",

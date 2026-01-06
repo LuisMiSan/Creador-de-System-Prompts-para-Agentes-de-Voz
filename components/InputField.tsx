@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { MicrophoneIcon, SparklesIcon } from './Icons';
+import { translations, Language } from '../translations';
 
 interface InputFieldProps {
     label: string;
@@ -13,7 +14,8 @@ interface InputFieldProps {
     onMicClick?: () => void;
     isListening?: boolean;
     micSupported?: boolean;
-    onAutoGenerate?: () => void; // New prop for the magic wand
+    onAutoGenerate?: () => void;
+    lang: Language; // Added lang prop
 }
 
 const InputField: React.FC<InputFieldProps> = ({ 
@@ -28,8 +30,9 @@ const InputField: React.FC<InputFieldProps> = ({
     isListening = false,
     micSupported = false,
     onAutoGenerate,
+    lang
 }) => {
-    // Generate a unique ID for the input to connect the label for accessibility
+    const t = translations[lang];
     const inputId = `input-${label.replace(/\s+/g, '-').toLowerCase()}`;
 
     const commonInputClasses = `
@@ -38,7 +41,6 @@ const InputField: React.FC<InputFieldProps> = ({
         shadow-sm
         ${(micSupported || onAutoGenerate) ? "pr-20" : ""} 
     `;
-    // Increased padding-right to accommodate two buttons if needed
 
     return (
         <div className="flex flex-col gap-2">
@@ -48,7 +50,7 @@ const InputField: React.FC<InputFieldProps> = ({
                         id={inputId}
                         value={value}
                         onChange={onChange}
-                        placeholder=" " // A space is needed for the :placeholder-shown selector to work
+                        placeholder=" " 
                         required={required}
                         rows={4}
                         className={`${commonInputClasses} px-3 pt-6 pb-2 resize-none`}
@@ -84,8 +86,8 @@ const InputField: React.FC<InputFieldProps> = ({
                             type="button"
                             onClick={onAutoGenerate}
                             className="p-1.5 rounded-full text-indigo-500 hover:text-white hover:bg-indigo-500 transition-colors duration-300"
-                            title="Autocompletar con IA"
-                            aria-label="Generar contenido con IA"
+                            title={t.titleAutocomplete}
+                            aria-label={t.ariaGenerate}
                         >
                             <SparklesIcon />
                         </button>
@@ -96,8 +98,8 @@ const InputField: React.FC<InputFieldProps> = ({
                             type="button"
                             onClick={onMicClick}
                             className={`p-1.5 rounded-full transition-colors ${isListening ? 'text-red-500 bg-red-100 animate-pulse' : 'text-gray-400 hover:text-gray-600'}`}
-                            aria-label="Activar dictado por voz"
-                            title="Dictar por voz"
+                            aria-label={t.ariaMic}
+                            title={t.titleMic}
                         >
                             <MicrophoneIcon />
                         </button>
