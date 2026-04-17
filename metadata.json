@@ -1,7 +1,8 @@
 {
   "name": "VoxWizard IA",
-  "description": "Crea system prompts detallados y efectivos para agentes de voz de IA, optimizados para plataformas como Retell AI y Vapi.",
+  "description": "Herramienta profesional para la ingeniería de system prompts de agentes de voz IA (Retell, Vapi). Optimizada con Gemini 3.",
   "requestFramePermissions": [
     "microphone"
-  ]
+  ],
+  "majorCapabilities": []
 }

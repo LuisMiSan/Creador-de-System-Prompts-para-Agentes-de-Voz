@@ -100,6 +100,9 @@ const App: React.FC = () => {
     const [micSupported, setMicSupported] = useState<boolean>(false);
     const [language, setLanguage] = useState<Language>('es');
 
+    // Project Management State
+    const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
+
     // Suggestions State
     const [suggestionModalOpen, setSuggestionModalOpen] = useState(false);
     const [isGeneratingSuggestion, setIsGeneratingSuggestion] = useState(false);
@@ -165,29 +168,43 @@ const App: React.FC = () => {
                 if (hash.startsWith('#prompt=')) {
                     try {
                         const encodedData = hash.substring('#prompt='.length);
+                        // Security: Check payload size (limit to ~50KB to avoid extreme memory usage)
+                        if (encodedData.length > 50000) {
+                             throw new Error("Payload too large");
+                        }
+
                         // Fix for Unicode decoding
                         const decodedData = decodeURIComponent(escape(atob(encodedData)));
-                        const sharedData: Partial<ShareablePromptData> = JSON.parse(decodedData);
+                        const sharedData: any = JSON.parse(decodedData);
                         
-                        const initialPromptData = {
-                            agentRole: '', personality: '', toneAndLanguage: '', 
-                            responseGuidelines: '', task: '', context: '', 
-                            stepByStep: '', notes: ''
+                        // Validation: Ensure the basic structure exists and is safe
+                        if (!sharedData || typeof sharedData !== 'object') {
+                            throw new Error("Invalid structure");
+                        }
+
+                        // Basic structural mapping and sanitization
+                        const sanitizedPromptData = {
+                            agentRole: String(sharedData.promptData?.agentRole || '').substring(0, 2000),
+                            personality: String(sharedData.promptData?.personality || '').substring(0, 2000),
+                            toneAndLanguage: String(sharedData.promptData?.toneAndLanguage || '').substring(0, 2000),
+                            responseGuidelines: String(sharedData.promptData?.responseGuidelines || '').substring(0, 5000),
+                            task: String(sharedData.promptData?.task || '').substring(0, 5000),
+                            context: String(sharedData.promptData?.context || '').substring(0, 10000),
+                            stepByStep: String(sharedData.promptData?.stepByStep || '').substring(0, 5000),
+                            notes: String(sharedData.promptData?.notes || '').substring(0, 5000),
                         };
 
-                        setPromptData(sharedData.promptData || initialPromptData);
-                        setVariables(sharedData.variables || []);
-                        setNiche(sharedData.niche || '');
-                        setGeneratedPrompt(sharedData.generatedPrompt || '');
+                        setPromptData(sanitizedPromptData);
+                        setVariables(Array.isArray(sharedData.variables) ? sharedData.variables.slice(0, 20).map((v: any) => ({
+                            id: String(v.id || Date.now()),
+                            name: String(v.name || '').replace(/[^a-zA-Z0-9_]/g, '').substring(0, 50),
+                            value: String(v.value || '').substring(0, 1000)
+                        })) : []);
+                        setNiche(String(sharedData.niche || '').substring(0, 100));
+                        setGeneratedPrompt(String(sharedData.generatedPrompt || '').substring(0, 20000));
+                        setCurrentProjectId(null); // Shared prompts are new by default
 
-                        // Cannot access 't' here easily as it's inside useEffect, using simple string or moving t out?
-                        // Actually 't' depends on language state. For initial load toast, we can assume ES or reload based on saved pref (if we had one).
-                        // For now we will use a generic message or just set it. 
-                        // To be clean, we can rely on re-render. But useEffect runs once.
-                        // Let's just use hardcoded English/Spanish neutral or current state language (default 'es').
-                        // Better: Use a ref or simple logic.
-                        const currentLang = language; 
-                        const msgs = translations[currentLang];
+                        const msgs = translations[language];
                         setToastMessage(msgs.toastSharedLoaded);
                         setTimeout(() => setToastMessage(''), 3000);
 
@@ -198,6 +215,8 @@ const App: React.FC = () => {
                         return; 
                     } catch (err) {
                         console.error("Error loading shared prompt", err);
+                        const msgs = translations[language];
+                        setError(msgs.errorInvalidShareData);
                         // If URL load fails, continue to load autosave
                     }
                 }
@@ -303,12 +322,13 @@ const App: React.FC = () => {
         setNiche('');
         setError(null);
         setVariables([]);
+        setCurrentProjectId(null); // Templates are new projects
         formRef.current?.scrollIntoView({ behavior: 'smooth' });
         setToastMessage(t.toastTemplateLoaded);
         setTimeout(() => setToastMessage(''), 3000);
     };
 
-    const handleSaveToHistory = () => {
+    const handleSaveProject = () => {
         const trimmedNiche = niche.trim();
         const minLength = 3;
 
@@ -323,29 +343,51 @@ const App: React.FC = () => {
         }
         setError(null);
 
-        const newHistoryItem: PromptHistoryItem = {
-            id: new Date().toISOString(),
-            promptData,
-            generatedPrompt,
-            timestamp: Date.now(),
-            niche: trimmedNiche,
-            variables,
-        };
-        
-        const isDuplicate = history.some(item => 
-            item.generatedPrompt === newHistoryItem.generatedPrompt && 
-            JSON.stringify(item.promptData) === JSON.stringify(newHistoryItem.promptData) &&
-            item.niche === newHistoryItem.niche
-        );
+        // CHECK IF WE ARE UPDATING AN EXISTING PROJECT
+        if (currentProjectId) {
+            // Update logic
+            setHistory(prevHistory => prevHistory.map(item => {
+                if (item.id === currentProjectId) {
+                    return {
+                        ...item,
+                        promptData,
+                        generatedPrompt,
+                        timestamp: Date.now(),
+                        niche: trimmedNiche,
+                        variables
+                    };
+                }
+                return item;
+            }));
+            setToastMessage(t.toastUpdatedDB);
+        } else {
+            // Create new project logic
+            // Check for duplicate names only when creating new
+            const isDuplicate = history.some(item => 
+                item.niche.toLowerCase() === trimmedNiche.toLowerCase()
+            );
 
-        if (isDuplicate) {
-            setToastMessage(t.toastDuplicate);
-            setTimeout(() => setToastMessage(''), 3000);
-            return;
+            if (isDuplicate) {
+                setToastMessage(t.toastDuplicate);
+                setTimeout(() => setToastMessage(''), 3000);
+                return;
+            }
+
+            const newId = new Date().toISOString();
+            const newHistoryItem: PromptHistoryItem = {
+                id: newId,
+                promptData,
+                generatedPrompt,
+                timestamp: Date.now(),
+                niche: trimmedNiche,
+                variables,
+            };
+
+            setHistory(prevHistory => [newHistoryItem, ...prevHistory]);
+            setCurrentProjectId(newId); // Set as current project
+            setToastMessage(t.toastSavedDB);
         }
-
-        setHistory(prevHistory => [newHistoryItem, ...prevHistory]);
-        setToastMessage(t.toastSavedDB);
+        
         setTimeout(() => setToastMessage(''), 3000);
     };
 
@@ -521,12 +563,17 @@ const App: React.FC = () => {
         setGeneratedPrompt(item.generatedPrompt);
         setNiche(item.niche);
         setVariables(item.variables || []);
+        setCurrentProjectId(item.id); // Set as current project being edited
         formRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
     const handleDeleteHistoryItem = (id: string) => {
         if (window.confirm(t.confirmDelete)) {
             setHistory(prev => prev.filter(item => item.id !== id));
+            // If deleting current project, reset form
+            if (id === currentProjectId) {
+                handleClearForm();
+            }
             setToastMessage(t.toastDeleted);
             setTimeout(() => setToastMessage(''), 3000);
         }
@@ -555,8 +602,15 @@ const App: React.FC = () => {
         setGeneratedPrompt('');
         setError(null);
         setVariables([]);
+        setCurrentProjectId(null); // Reset current project ID
         localStorage.removeItem('autoSavedPrompt');
         setAutoSavedData(null);
+    };
+    
+    const handleNewProject = () => {
+        handleClearForm();
+        setToastMessage("Nuevo proyecto iniciado");
+        setTimeout(() => setToastMessage(''), 2000);
     };
 
     // --- Dynamic Variable Handlers ---
@@ -694,19 +748,42 @@ const App: React.FC = () => {
                     )}
                     
                     <form onSubmit={handleSubmit}>
-                        <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
-                            <h2 className="text-xl font-bold text-gray-800 uppercase tracking-wide flex items-center gap-2">
-                                <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                                {t.configTitle}
-                            </h2>
-                            <button
-                                type="button"
-                                onClick={handleClearForm}
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-md transition-colors"
-                            >
-                                <TrashIcon />
-                                {t.clearBtn}
-                            </button>
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b border-gray-100 pb-4 gap-4">
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-800 uppercase tracking-wide flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                                    {t.configTitle}
+                                </h2>
+                                {currentProjectId && (
+                                    <div className="mt-1 flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+                                        <span className="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-indigo-200">
+                                            {t.editingBadge}
+                                        </span>
+                                        <span className="text-xs text-gray-500 font-mono">{niche || '...'}</span>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                                {currentProjectId && (
+                                    <button
+                                        type="button"
+                                        onClick={handleNewProject}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 rounded-md transition-colors font-semibold"
+                                    >
+                                        <PlusIcon />
+                                        {t.newProjectBtn}
+                                    </button>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={handleClearForm}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-gray-50 hover:bg-red-50 text-gray-600 hover:text-red-600 border border-gray-200 hover:border-red-200 rounded-md transition-colors"
+                                >
+                                    <TrashIcon />
+                                    {t.clearBtn}
+                                </button>
+                            </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="md:col-span-2">
@@ -856,12 +933,16 @@ const App: React.FC = () => {
                              {generatedPrompt && !isLoading && (
                                 <button
                                     type="button"
-                                    onClick={handleSaveToHistory}
-                                    className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm transition-colors duration-200"
-                                    aria-label="Guardar el prompt actual en el historial"
+                                    onClick={handleSaveProject}
+                                    className={`flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 border font-semibold rounded-lg shadow-sm transition-colors duration-200 ${
+                                        currentProjectId 
+                                        ? "bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100"
+                                        : "bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200"
+                                    }`}
+                                    aria-label="Guardar proyecto"
                                 >
                                     <PlusIcon />
-                                    {t.saveDbBtn}
+                                    {currentProjectId ? t.updateDbBtn : t.saveDbBtn}
                                 </button>
                             )}
                         </div>

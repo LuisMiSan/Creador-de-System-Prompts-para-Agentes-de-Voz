@@ -6,7 +6,7 @@ import { VoiceAgentPromptData } from '../types';
  * Generates a refined system prompt using the Gemini API.
  */
 export const generatePerfectPrompt = async (promptData: VoiceAgentPromptData): Promise<string> => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
     console.log("Generating prompt with Gemini API:", promptData);
 
@@ -95,7 +95,7 @@ export const generateSuggestions = async (
     targetField: 'responseGuidelines' | 'stepByStep' | 'notes',
     language: 'es' | 'en'
 ): Promise<string[]> => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     
     // Determine context string
     const contextStr = `

@@ -14,7 +14,9 @@ export const translations = {
         
         // Form Section
         configTitle: "Configuración del Agente",
-        clearBtn: "Limpiar",
+        clearBtn: "Limpiar Campos",
+        newProjectBtn: "Nuevo Proyecto",
+        editingBadge: "EDITANDO: ",
         
         // Inputs
         roleLabel: "Rol del Agente",
@@ -49,9 +51,9 @@ export const translations = {
         notesPlaceholder: "Ej: Evitar temas no relacionados...",
         notesHelp: "Reglas específicas o manejo de casos excepcionales.",
         
-        nicheLabel: "Nicho del Prompt",
+        nicheLabel: "Nombre del Proyecto / Nicho",
         nichePlaceholder: "Ej: Peluquería, Inmobiliaria, Restaurante...",
-        nicheHelp: "Categoriza este prompt para encontrarlo fácilmente. (Obligatorio)",
+        nicheHelp: "Nombre único para identificar este proyecto en la base de datos. (Obligatorio)",
         
         // InputField Tooltips & Aria
         titleAutocomplete: "Autocompletar con IA",
@@ -62,7 +64,8 @@ export const translations = {
         // Buttons
         processBtn: "Generar System Prompt",
         processingBtn: "Procesando...",
-        saveDbBtn: "Guardar en DB",
+        saveDbBtn: "Guardar Nuevo Proyecto",
+        updateDbBtn: "Actualizar Proyecto",
         
         // Output Section
         generatedTitle: "System Prompt Generado",
@@ -77,8 +80,9 @@ export const translations = {
         toastTemplateLoaded: "Plantilla cargada. ¡Ya puedes editarla!",
         errorFieldRequired: "El campo '{0}' es obligatorio y debe tener al menos {1} caracteres.",
         errorNoPrompt: "No hay ningún prompt generado para guardar.",
-        toastDuplicate: "Este prompt ya está en tu historial.",
-        toastSavedDB: "Prompt guardado en la base de datos",
+        toastDuplicate: "Ya existe un proyecto con este nombre. Usa 'Actualizar' o cambia el nombre.",
+        toastSavedDB: "Nuevo proyecto creado exitosamente.",
+        toastUpdatedDB: "Proyecto actualizado correctamente.",
         toastDownloadingMD: "Descargando archivo Markdown...",
         errorDownload: "Error al descargar el archivo.",
         errorNoPDFContent: "Error: No hay contenido para generar PDF",
@@ -86,48 +90,49 @@ export const translations = {
         toastPDFDownloaded: "PDF descargado correctamente",
         errorPDFGen: "Error al generar el archivo PDF.",
         errorShareLink: "No se pudo crear el enlace para compartir.",
-        confirmDelete: "¿Estás seguro de que quieres borrar este prompt?",
-        toastDeleted: "Prompt eliminado.",
+        errorInvalidShareData: "El enlace compartido contiene datos inválidos o dañados.",
+        confirmDelete: "¿Estás seguro de que quieres eliminar este proyecto permanentemente?",
+        toastDeleted: "Proyecto eliminado.",
         toastVarUpdated: "Variable actualizada",
         errorGenSuggestions: "Error generando sugerencias. Por favor intenta de nuevo.",
         toastContentInserted: "Contenido insertado correctamente",
 
         // History
-        historyTitle: "Historial de Procesamiento",
-        historySubtitle: "Registros de base de datos y salidas generadas.",
-        searchPlaceholder: "Buscar registros...",
-        exportBtn: "Exportar",
+        historyTitle: "Base de Datos de Proyectos",
+        historySubtitle: "Gestión de proyectos guardados y versiones.",
+        searchPlaceholder: "Buscar proyectos...",
+        exportBtn: "Exportar Todo",
         printBtn: "PDF",
-        noHistory: "No hay historial de procesamiento",
-        noHistorySub: "Genera tu primer prompt para llenar esta tabla.",
-        noMatches: "No se encontraron coincidencias",
+        noHistory: "Base de datos vacía",
+        noHistorySub: "Guarda tu primer proyecto para verlo aquí.",
+        noMatches: "No se encontraron proyectos",
         errorPDFHistory: "Error al generar el PDF del historial.",
         
         // Markdown Export Content
         mdTitle: "Mi Base de Datos de Prompts",
-        mdPromptFor: "Prompt para",
-        mdNoNiche: "Sin Nicho",
-        mdDate: "Fecha",
-        mdInputData: "Datos de Entrada",
-        mdDynamicVars: "Variables Dinámicas",
-        mdGeneratedPrompt: "Prompt Generado",
+        mdPromptFor: "Proyecto",
+        mdNoNiche: "Sin Nombre",
+        mdDate: "Última Modificación",
+        mdInputData: "Configuración",
+        mdDynamicVars: "Variables",
+        mdGeneratedPrompt: "Prompt Resultante",
 
         // Table Headers
-        thNiche: "Nicho / Etiqueta",
+        thNiche: "Proyecto / Nicho",
         thAgent: "Definición del Agente",
-        thDate: "Fecha",
-        thAction: "Acción",
+        thDate: "Modificado",
+        thAction: "Acciones",
         
         // History Details
-        detailLog: "Detalles del Registro",
+        detailLog: "Detalles del Proyecto",
         detailRole: "Rol del Agente",
         detailTask: "Tarea",
         detailPersonality: "Personalidad",
         detailTone: "Tono",
-        detailContext: "Contexto / Base de Conocimiento",
+        detailContext: "Contexto",
         detailGuidelines: "Directrices",
-        detailVars: "Variables Definidas",
-        detailOutput: "Salida Compilada",
+        detailVars: "Variables",
+        detailOutput: "Salida",
         
         // Examples
         templatesTitle: "Plantillas Base",
@@ -198,7 +203,9 @@ export const translations = {
         
         // Form Section
         configTitle: "Agent Configuration",
-        clearBtn: "Clear",
+        clearBtn: "Clear Fields",
+        newProjectBtn: "New Project",
+        editingBadge: "EDITING: ",
         
         // Inputs
         roleLabel: "Agent Role",
@@ -233,9 +240,9 @@ export const translations = {
         notesPlaceholder: "Ex: Avoid unrelated topics...",
         notesHelp: "Specific rules or handling exceptional cases.",
         
-        nicheLabel: "Prompt Niche",
+        nicheLabel: "Project Name / Niche",
         nichePlaceholder: "Ex: Hair Salon, Real Estate, Restaurant...",
-        nicheHelp: "Categorize this prompt to find it easily. (Required)",
+        nicheHelp: "Unique name to identify this project in the database. (Required)",
 
         // InputField Tooltips & Aria
         titleAutocomplete: "Autocomplete with AI",
@@ -246,7 +253,8 @@ export const translations = {
         // Buttons
         processBtn: "Generate System Prompt",
         processingBtn: "Processing...",
-        saveDbBtn: "Save to DB",
+        saveDbBtn: "Save New Project",
+        updateDbBtn: "Update Project",
         
         // Output Section
         generatedTitle: "Generated System Prompt",
@@ -261,8 +269,9 @@ export const translations = {
         toastTemplateLoaded: "Template loaded. You can edit it now!",
         errorFieldRequired: "The field '{0}' is required and must have at least {1} characters.",
         errorNoPrompt: "There is no generated prompt to save.",
-        toastDuplicate: "This prompt is already in your history.",
-        toastSavedDB: "Prompt saved to database",
+        toastDuplicate: "A project with this name already exists. Use 'Update' or change the name.",
+        toastSavedDB: "New project created successfully.",
+        toastUpdatedDB: "Project updated successfully.",
         toastDownloadingMD: "Downloading Markdown file...",
         errorDownload: "Error downloading file.",
         errorNoPDFContent: "Error: No content to generate PDF",
@@ -270,48 +279,49 @@ export const translations = {
         toastPDFDownloaded: "PDF downloaded successfully",
         errorPDFGen: "Error generating PDF file.",
         errorShareLink: "Could not create share link.",
-        confirmDelete: "Are you sure you want to delete this prompt?",
-        toastDeleted: "Prompt deleted.",
+        errorInvalidShareData: "The shared link contains invalid or corrupted data.",
+        confirmDelete: "Are you sure you want to delete this project permanently?",
+        toastDeleted: "Project deleted.",
         toastVarUpdated: "Variable updated",
         errorGenSuggestions: "Error generating suggestions. Please try again.",
         toastContentInserted: "Content inserted successfully",
         
         // History
-        historyTitle: "Processing History",
-        historySubtitle: "Database records and generated outputs.",
-        searchPlaceholder: "Search logs...",
-        exportBtn: "Export",
+        historyTitle: "Project Database",
+        historySubtitle: "Manage saved projects and versions.",
+        searchPlaceholder: "Search projects...",
+        exportBtn: "Export All",
         printBtn: "PDF",
-        noHistory: "No processing history yet",
-        noHistorySub: "Generate your first prompt to populate this table.",
-        noMatches: "No matches found",
+        noHistory: "Database empty",
+        noHistorySub: "Save your first project to see it here.",
+        noMatches: "No projects found",
         errorPDFHistory: "Error generating history PDF.",
 
         // Markdown Export Content
-        mdTitle: "My Prompt Database",
-        mdPromptFor: "Prompt for",
-        mdNoNiche: "No Niche",
-        mdDate: "Date",
-        mdInputData: "Input Data",
+        mdTitle: "My Project Database",
+        mdPromptFor: "Project",
+        mdNoNiche: "No Name",
+        mdDate: "Last Modified",
+        mdInputData: "Configuration",
         mdDynamicVars: "Dynamic Variables",
         mdGeneratedPrompt: "Generated Prompt",
         
         // Table Headers
-        thNiche: "Niche / Tag",
+        thNiche: "Project / Niche",
         thAgent: "Agent Definition",
-        thDate: "Date",
-        thAction: "Action",
+        thDate: "Modified",
+        thAction: "Actions",
         
         // History Details
-        detailLog: "System Log Details",
+        detailLog: "Project Details",
         detailRole: "Agent Role",
         detailTask: "Task",
         detailPersonality: "Personality",
         detailTone: "Tone",
-        detailContext: "Context / Knowledge Base",
+        detailContext: "Context",
         detailGuidelines: "Guidelines",
-        detailVars: "Defined Variables",
-        detailOutput: "Compiled Output",
+        detailVars: "Variables",
+        detailOutput: "Output",
         
         // Examples
         templatesTitle: "Core Templates",
